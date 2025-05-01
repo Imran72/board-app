@@ -1,0 +1,165 @@
+.card-container {
+    position: relative;
+    width: 95%;
+    height: 40vh;
+    margin: auto;
+    overflow: hidden;
+    border-radius: 15px; /* Закругление углов */
+    padding-top: 5px;
+}
+
+.card {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 3;
+    padding-top: 5px;
+}
+
+.event-image-container {
+    width: 100%; /* Контейнер занимает всю ширину карточки */
+    height: 40%; /* Высота контейнера баннера равна 40% от карточки */
+    overflow: hidden; /* Обрезка изображения за пределами контейнера */
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.event-image {
+    width: 100%; /* Изображение подстраивается под ширину контейнера */
+    height: 100%; /* Высота подстраивается под контейнер */
+    object-fit: contain; /* Изображение полностью вмещается в контейнер без обрезки */
+    background-color: #f0f0f0; /* Фон для случая, если изображение отсутствует */
+}
+
+
+
+.event-actions {
+    display: flex; /* Располагаем кнопки в строку */
+    flex-wrap: nowrap; /* Запрещаем перенос кнопок на новую строку */
+    justify-content: space-between; /* Распределяем кнопки с отступами */
+    gap: 5px; /* Отступы между кнопками */
+    overflow-x: auto;
+    padding-left: 15px; /* Отступ слева */
+    padding-right: 15px; /* Отступ слева */
+    z-index: 3;
+}
+
+.action-button {
+    width: 88px; /* Фиксированная ширина кнопки */
+    height: 60px; /* Фиксированная высота кнопки */
+    display: flex;
+    flex-direction: column; /* Элементы внутри кнопки располагаются вертикально */
+    align-items: center; /* Центрирование содержимого по горизонтали */
+    justify-content: center; /* Центрирование содержимого по вертикали */
+    background-color: rgba(255, 255, 255, 0.3);
+    border: none;
+    border-radius: 12px; /* Скруглённые углы кнопки */
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    color: #fff; /* Цвет текста */
+    font-size: 14px;
+    z-index: 3;
+}
+
+
+.action-button:hover {
+    background-color: #333; /* Цвет кнопки при наведении */
+}
+
+
+@media (max-width: 768px) {
+    .action-button {
+        width: 100%; /* Кнопки занимают всю ширину экрана */
+    }
+}
+
+.card-image {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    object-fit: cover;
+}
+
+.event-title {
+    color: #ffffff; /* Белый текст */
+    font-size: 30px; /* Размер шрифта */
+    line-height: 1; /* Межстрочный интервал */
+    padding-left: 15px; /* Отступ слева */
+    margin-bottom: 3px; /* Отступ снизу */
+    z-index: 3;
+}
+
+.event-date {
+    color: #ffffff; /* Серый текст */
+    color: rgba(255, 255, 255, 0.5); /* Прозрачный текст */
+    font-size: 17px; /* Размер шрифта */
+    line-height: 2; /* Межстрочный интервал */
+    margin: 5px 0 20px 0; /* Отступы (снизу 10px, остальные 0) */
+    padding-left: 15px; /* Отступ слева */
+    z-index: 3;
+}
+
+
+.section-title {
+    font-size: 17px;
+    font-weight: 500;
+    color: #ffffff; /* Серый текст */
+    color: rgba(255, 255, 255, 0.5); /* Прозрачный текст */
+    margin-bottom: 5px;
+    padding-left: 15px; /* Отступ слева */
+    padding-right: 15px; /* Отступ слева */
+    z-index: 3;
+}
+
+/* Текст секции */
+.section-content {
+    font-size: 17px;
+    line-height: 1.5;
+    color: #ffffff; /* Серый текст */
+    margin-bottom: 5px;
+    margin-top: 5px;
+    padding-left: 15px; /* Отступ слева */
+    padding-right: 15px; /* Отступ слева */
+    z-index: 3;
+}
+
+.divider {
+    border: none; /* Убираем стандартную рамку */
+    height: 1px; /* Толщина линии */
+    background-color: #808080; /* Цвет линии */
+    margin: 10px 15px; /* Отступ сверху/снизу = 10px, слева/справа = 15px */
+    z-index: 3;
+}
+
+/* Контейнер всей страницы */
+.event-page {
+    position: relative; /* Важно для `z-index` */
+    z-index: 3; /* Поднимаем контент выше фона */
+}
+
+/* Размытый фон */
+.event-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(30px);
+    transform: scale(1.2);
+    opacity: 0.5;
+    z-index: 2; /* Оставляем фон ниже контента */
+}
+
+

@@ -1,0 +1,91 @@
+.saved_events_page {
+
+    margin-top: 60px;
+    padding: 0;
+    background-color: #000; /* Чёрный фон */
+    color: white; /* Белый текст */
+    min-height: 100vh;
+}
+
+.events_container {
+
+    display: flex;
+    flex-wrap: wrap; /* Элементы переносятся на новую строку при недостатке места */
+    gap: 1px; /* Отступы между мероприятиями */
+    justify-content: center; /* Центрируем элементы */
+
+
+}
+
+.event_card {
+    display: flex;
+    flex-direction: row; /* Располагаем элементы в строку */
+    align-items: center; /* Выравниваем элементы по центру */
+    background-color: #000;
+    border-radius: 10px;
+    width: 100%; /* Растягиваем на всю ширину */
+    min-width: 350px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    color: white;
+    padding: 10px; /* Добавляем отступы */
+}
+
+.event_image {
+    width: 83px;
+    height: 124px;
+    border-radius: 9px;
+    margin: 0 15px 0 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.event_image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Изображение заполняет контейнер без искажений */
+    border-radius: 9px;
+}
+
+.event_details {
+    padding: 15px;
+}
+
+.event_name {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0 0 5px 0;
+}
+
+.event_host {
+    font-size: 14px;
+    color: #a9a9a9; /* Серый цвет текста */
+    margin: 0 0 10px 0;
+}
+
+.event_meta {
+    font-size: 14px;
+    line-height: 1.5;
+    width: 100%; /* Растягиваем на всю ширину */
+}
+
+
+.event_meta .icon {
+    margin-right: 5px;
+
+}
+
+.event_meta div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.event_separator {
+    width: 100%; /* Полоска на всю ширину */
+    height: 1px; /* Толщина полоски */
+    background-color: #444; /* Серый цвет */
+    margin: 10px 0; /* Отступ сверху и снизу */
+    opacity: 0.6; /* Немного прозрачности */
+}
