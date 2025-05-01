@@ -1,0 +1,137 @@
+
+.top_events_page {
+    margin-top: 60px;
+    padding: 0;
+    background-color: #000; /* Чёрный фон */
+    color: white; /* Белый текст */
+    min-height: 100vh;
+}
+
+.fixed_header {
+    position: fixed;
+    width: 100%;
+    height: 7vh;
+
+    color: white;
+    z-index: 1000;
+    text-align: center;
+    font-size: 16px;
+    backdrop-filter: blur(5px);
+    background: rgba(0, 0, 0, 0.5);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+/* Заголовок страницы */
+.page_title {
+    font-size: 20px;
+    text-align: center;
+    opacity: 0.4;
+}
+
+/* Список карточек событий */
+.event_list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Расстояние между карточками */
+}
+
+/* Карточка события */
+.event_card {
+    display: flex;
+    flex-direction: row; /* Располагаем элементы в строку */
+    align-items: center;
+    background-color: #000; /* Чёрный фон */
+    padding: 10px 0 10px 0;
+    height: 140px;
+    width: 100%;
+
+}
+
+/* Рейтинг / значок */
+.rank_icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 40px;
+    font-weight: bold;
+    color: white;
+    width: 50px;
+    height: 50px;
+}
+
+.rank_icon img {
+    width: 40px;
+    height: 40px;
+}
+
+
+
+.event_banner2 {
+    width: 83px;
+    height: 124px;
+    border-radius: 9px;
+    margin: 0 15px 0 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.event_banner2 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Изображение заполняет контейнер без искажений */
+    border-radius: 9px;
+}
+
+
+.event_details {
+    padding: 15px;
+}
+
+.event_name {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0 0 5px 0;
+}
+
+.event_host {
+    font-size: 14px;
+    color: #a9a9a9; /* Серый цвет текста */
+    margin: 0 0 10px 0;
+}
+
+.event_meta {
+    font-size: 14px;
+    line-height: 1.5;
+    width: 100%; /* Растягиваем на всю ширину */
+}
+
+
+.event_meta .icon {
+    margin-right: 5px;
+
+}
+
+.event_meta div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.event_separator {
+    width: 100%; /* Полоска на всю ширину */
+    height: 1px; /* Толщина полоски */
+    background-color: #444; /* Серый цвет */
+    margin: 10px 0; /* Отступ сверху и снизу */
+    opacity: 0.6; /* Немного прозрачности */
+}
+
+
+
+
+
