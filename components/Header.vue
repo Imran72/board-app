@@ -79,12 +79,15 @@ const selectDate = (day: string) => {
   padding: 0 0;
   width: 100%;
   height: 5vh;
+  justify-content: center; /* Center the dates horizontally */
 }
 
 .date-item {
   text-align: center;
   flex-shrink: 0;
   min-width: 50px;
+  display: flex;
+  justify-content: center; /* Center the date number within each item */
 }
 
 .date-number {

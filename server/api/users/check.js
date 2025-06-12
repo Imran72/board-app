@@ -1,8 +1,14 @@
-import { supabase } from '~/plugins/supabase';
+// Этот файл Nitro API-роут, который выполняется на сервере.
+// Он не использует плагинную систему Nuxt (она работает на клиенте и в SSR, но не в Nitro напрямую)
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default defineEventHandler(async (event) => {
     // Чтение данных из тела запроса
-    const body = await readBody(event);
+    const body = await readBody(event); // читаю тело запроса
     const userId = parseInt(body.userId, 10);
     const userFirstName = body.userFirstName;
     const userLastName = body.userLastName;
@@ -20,7 +26,7 @@ export default defineEventHandler(async (event) => {
     const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', userId) // Выбери только ту строку, где колонка user_id (в таблице users) равна значению переменной userId
         .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') {

@@ -294,7 +294,6 @@ const resetForm = () => {
 
 
 
-
     <div :class="styles.comment">
       <div>Используйте теги для вашего мероприятия</div>
       <div>Чем больше тегов, тем точнее алгоритм</div>
@@ -405,15 +404,4 @@ const resetForm = () => {
 <style scoped>
 
 
-</style>
-
-
-
-
-
-
-
-
-
-
-
+</style> 

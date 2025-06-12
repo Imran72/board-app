@@ -26,7 +26,7 @@
 
 
         <div  class="likes-container">
-        <div class="event-likes">235 сохранили</div>
+        <div class="event-likes">{{ likesCount || 0 }} сохранили</div>
         </div>
 
 
@@ -70,6 +70,7 @@ import { useCardBackground } from '~/composables/useCardBackground'
 
 
 import { useRouter } from 'vue-router';
+import getEventLikes from '../server/api/getEventLikes';
 
 
 interface Event {
@@ -88,7 +89,6 @@ interface Response {
   success?: boolean
   error?: string
 }
-
 const startX = ref(0);
 const currentX = ref(0);
 const isDragging = ref(false);
@@ -97,6 +97,7 @@ const isDragging = ref(false);
 const currentCard = ref<Event | null>(null);
 const nextCard = ref<Event | null>(null);
 const previousCard = ref<Event | null>(null);
+const likesCount = ref(0);
 
 
 const {
@@ -138,10 +139,29 @@ const loadCard = async (eventId: number | null, direction: 'next' | 'prev' | 'cu
   }
 }
 
+const loadLikesCount = async (eventId) => {
+  if (!eventId) return;
+  
+  try {
+    console.log('Loading likes count for event:', eventId);
+    const response = await $fetch('/api/getEventLikes', {
+      method: 'POST',
+      body: { event_id: eventId }
+    });
+    
+    if (response.error) {
+      console.error('Ошибка при загрузке количества лайков:', response.error);
+      return;
+    }
+    
+    console.log('Received likes count:', response.count);
+    likesCount.value = response.count;
+  } catch (err) {
+    console.error('Ошибка запроса количества лайков:', err);
+  }
+};
+
 const initCards = async (event_id) => {
-
-
-
   previousCard.value = null;
 
   if (event_id) {
@@ -152,19 +172,17 @@ const initCards = async (event_id) => {
 
   if (currentCard.value) {
     nextCard.value = await loadCard(currentCard.value.event_id, 'next');
+    await loadLikesCount(currentCard.value.event_id);
   }
-
 };
 
 
 
 
-const swipeCard = async (direction: 'left' | 'right') => {
-  if (!currentCard.value) return
-
+const swipeCard = async (direction) => {
   try {
-    const { initDataUnsafe } = useWebApp()
-    const user_id = initDataUnsafe?.user?.id
+    const { initDataUnsafe } = useWebApp();
+    const user_id = initDataUnsafe?.user?.id;
 
     if (!user_id) {
       console.error('Ошибка: нет user_id')
@@ -197,6 +215,11 @@ const swipeCard = async (direction: 'left' | 'right') => {
   previousCard.value = currentCard.value
   currentCard.value = nextCard.value
   nextCard.value = await loadCard(currentCard.value?.event_id || null, 'next')
+
+  // Обновляем количество лайков для новой карточки
+  if (currentCard.value) {
+    await loadLikesCount(currentCard.value.event_id);
+  }
 
   dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
   gradientBackgroundColor.value = await gradientBackground()
