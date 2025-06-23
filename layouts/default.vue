@@ -5,6 +5,7 @@
 import { useWebApp } from 'vue-tg';
 import { ref } from 'vue';
 import { onMounted, onBeforeUnmount } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import './assets/styles.css';
 
 
@@ -51,9 +52,22 @@ onMounted(() => {
 
   // обработка данных пользователя
   const {initDataUnsafe, ready} = useWebApp();
+  const route = useRoute();
+  const router = useRouter();
 
   // Уведомляем Telegram, что приложение готово
   ready();
+
+  // --- ДОБАВЛЕНО: обработка параметра startapp ---
+  const startapp = route.query.startapp;
+  if (startapp && typeof startapp === 'string') {
+    const eventId = startapp.replace('event_', '');
+    if (eventId) {
+      router.replace(`/event/${eventId}`);
+      return;
+    }
+  }
+  // --- КОНЕЦ ДОБАВЛЕНИЯ ---
 
   const userId = initDataUnsafe?.user?.id;
 

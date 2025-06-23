@@ -73,3 +73,7 @@ bun run preview
 ```
 
 Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+
+## Папка plugins
+
+В проекте должна быть папка `plugins` для Nuxt-плагинов. Например, для глобального редиректа по параметру startapp используется плагин `plugins/startapp-redirect.ts`.

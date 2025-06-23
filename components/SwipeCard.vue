@@ -1,7 +1,11 @@
 <template>
   <div class="swipe-container">
-
-
+    <div v-if="showExitButton" style="text-align:right; margin-bottom:10px;">
+      <button class="action-button" @click="exitApp">
+        <img src="/icons/back_button.svg" alt="Back" class="button-icon" />
+        Выйти
+      </button>
+    </div>
 
     <div
         v-if="currentCard"
@@ -11,6 +15,7 @@
         @touchstart="startDrag"
         @click="goToEvent(currentCard.event_id)"
     >
+<!--      v-if: показывает карточку только если данные текущей карточки загружены-->
 
 
       <img :src="currentCard.event_banner" alt="Event Banner" class="card-image" />
@@ -26,12 +31,14 @@
 
 
         <div  class="likes-container">
-        <div class="event-likes">{{ likesCount || 0 }} сохранили</div>
+<!--        <div class="event-likes">235 сохранили</div>-->
+          <div class="event-likes">{{ likesCount || 0 }} сохранили</div>
         </div>
 
 
 
-        <div class="event-desc">{{currentCard.event_weekday}},
+        <div class="event-desc">
+          {{currentCard.event_weekday}},
           {{format(new Date(currentCard.event_date), "d MMMM", { locale: ru })}}, {{currentCard.event_time}} GMT+3</div>
         <div class="event-desc">{{currentCard.event_location}}</div>
 
@@ -59,7 +66,7 @@
 <script setup lang="ts">
 
 
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import './assets/swiper.css';
 import {useWebApp} from "vue-tg";
 import { v5 as uuidv5 } from 'uuid';
@@ -70,7 +77,6 @@ import { useCardBackground } from '~/composables/useCardBackground'
 
 
 import { useRouter } from 'vue-router';
-import getEventLikes from '../server/api/getEventLikes';
 
 
 interface Event {
@@ -89,6 +95,7 @@ interface Response {
   success?: boolean
   error?: string
 }
+
 const startX = ref(0);
 const currentX = ref(0);
 const isDragging = ref(false);
@@ -97,8 +104,8 @@ const isDragging = ref(false);
 const currentCard = ref<Event | null>(null);
 const nextCard = ref<Event | null>(null);
 const previousCard = ref<Event | null>(null);
-const likesCount = ref(0);
 
+const likesCount = ref(0);
 
 const {
   dominantColor,
@@ -141,20 +148,18 @@ const loadCard = async (eventId: number | null, direction: 'next' | 'prev' | 'cu
 
 const loadLikesCount = async (eventId) => {
   if (!eventId) return;
-  
+
   try {
-    console.log('Loading likes count for event:', eventId);
     const response = await $fetch('/api/getEventLikes', {
       method: 'POST',
       body: { event_id: eventId }
     });
-    
+
     if (response.error) {
       console.error('Ошибка при загрузке количества лайков:', response.error);
       return;
     }
-    
-    console.log('Received likes count:', response.count);
+
     likesCount.value = response.count;
   } catch (err) {
     console.error('Ошибка запроса количества лайков:', err);
@@ -162,6 +167,9 @@ const loadLikesCount = async (eventId) => {
 };
 
 const initCards = async (event_id) => {
+
+
+
   previousCard.value = null;
 
   if (event_id) {
@@ -174,11 +182,14 @@ const initCards = async (event_id) => {
     nextCard.value = await loadCard(currentCard.value.event_id, 'next');
     await loadLikesCount(currentCard.value.event_id);
   }
+
 };
 
 
 
 
+// const swipeCard = async (direction: 'left' | 'right') => {
+//   if (!currentCard.value) return
 const swipeCard = async (direction) => {
   try {
     const { initDataUnsafe } = useWebApp();
@@ -215,6 +226,7 @@ const swipeCard = async (direction) => {
   previousCard.value = currentCard.value
   currentCard.value = nextCard.value
   nextCard.value = await loadCard(currentCard.value?.event_id || null, 'next')
+
 
   // Обновляем количество лайков для новой карточки
   if (currentCard.value) {
@@ -282,7 +294,7 @@ const endDrag = () => {
 
 
 const generateUniqueId = (user_id, event_id, timestamp) => {
-  const namespace = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'; // Уникальный namespace
+  const namespace = '6baё7b810-9dad-11d1-80b4-00c04fd430c8'; // Уникальный namespace
   const data = `${user_id}_${event_id}_${timestamp}`;
   return uuidv5(data, namespace);
 };
@@ -291,14 +303,13 @@ const route = useRoute();
 
 // Загружаем карточки при монтировании компонента
 onMounted(async () => {
-
-
   // Отключаем скролл
   document.body.style.overflow = 'hidden';
 
+  // Удалена обработка startapp, теперь она только в плагине
+
   // последняя карточка, которую видел пользователь
   const savedEventId = localStorage.getItem('last_event_id');
-
 
   if (route.query.scrollTo) {
     await initCards(route.query.scrollTo)
@@ -306,24 +317,43 @@ onMounted(async () => {
     await initCards(parseInt(savedEventId));
   }
 
-
   dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
   gradientBackgroundColor.value = await gradientBackground();
 
-
+  const isDeepLink = sessionStorage.getItem('isDeepLink');
+  if (isDeepLink === 'true') {
+    showExitButton.value = true;
+  }
 });
 
 
-const shareEvent = (card) => {
-  const eventUrl = `@board_mini_app_bot`;
-  const text =  ``;
-  // const text = `Посмотри это мероприятие: ${card.event_name}`;
+// const shareEvent = (card) => {
+//   const eventUrl = `@board_mini_app_bot`;
+//   const text =  ``;
+//   // const text = `Посмотри это мероприятие: ${card.event_name}`;
+//
+//   // Ссылка для открытия Telegram
+//   const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(text)}`;
+//
+//   // Открыть Telegram с указанной ссылкой
+//   window.open(telegramShareUrl, '_blank');
+// };
+const shareEvent = (eventId) => {
+  const eventUrl = `https://t.me/Board_demo_bot/my_board_app?startapp=event_${eventId}`;
+  const eventName = currentCard.value?.event_name || 'Мероприятие';
+  const shareText = `Посмотри это мероприятие: ${eventName}`;
 
-  // Ссылка для открытия Telegram
-  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(text)}`;
+  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(shareText)}`;
 
-  // Открыть Telegram с указанной ссылкой
-  window.open(telegramShareUrl, '_blank');
+  // Используй Telegram WebApp API
+  const { WebApp } = useWebApp();
+
+  if (WebApp && WebApp.openTelegramLink) {
+    WebApp.openTelegramLink(telegramShareUrl);
+  } else {
+    // Фолбэк на случай, если openTelegramLink недоступен
+    window.open(telegramShareUrl, '_blank');
+  }
 };
 
 
@@ -353,6 +383,15 @@ const recalculateFavorites = async (userId: string) => {
     console.error('Ошибка при запросе пересчёта избранного:', err)
   }
 }
+
+const showExitButton = ref(false);
+const webApp = useWebApp();
+
+const exitApp = () => {
+  if (webApp?.close) {
+    webApp.close();
+  }
+};
 
 
 

@@ -9,6 +9,12 @@
 
 
   <div class="event-page">
+    <div v-if="showBackButton" style="text-align:right; margin-bottom:10px;">
+      <button class="action-button" @click="goToSwipe">
+        <img src="/icons/back_button.svg" alt="Back" class="button-icon" />
+        Выйти
+      </button>
+    </div>
 
 
 
@@ -37,11 +43,11 @@
         <img src="/icons/save.svg" alt="Save Icon" class="button-icon" />
         Сохранить
       </button>
-      <button class="action-button">
+      <button class="action-button" >
         <img src="/icons/Contact.svg" alt="Contact Icon" class="button-icon" />
         Контакт
       </button>
-      <button class="action-button">
+      <button class="action-button" @click="shareEvent(event.event_id)">
         <img src="/icons/Share.svg" alt="Share Icon" class="button-icon" />
         Поделиться
       </button>
@@ -101,7 +107,7 @@ import './assets/event-card.css';
 
 
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import {ru} from "date-fns/locale";
 
 interface Event {
@@ -118,6 +124,7 @@ interface Event {
 
 
 const route = useRoute();
+const router = useRouter();
 const event = ref<Event>({
   event_id: "",
   event_name: "",
@@ -129,7 +136,7 @@ const event = ref<Event>({
   event_desc: "",
 });
 
-
+const showBackButton = ref(false);
 
 const fetchEvent = async (id : string) => {
 
@@ -140,9 +147,12 @@ const fetchEvent = async (id : string) => {
 
 
 onMounted(() => {
-
-
-
+  // Проверяем, был ли deep link
+  const query = route.query;
+  if (query.startapp || query.tgWebAppStartParam || query.start_param) {
+    showBackButton.value = true;
+    sessionStorage.setItem('isDeepLink', 'true');
+  }
   fetchEvent(String(route.params.id));
 });
 
@@ -160,8 +170,6 @@ const shortWeekdays = {
 
 const capitalizeMonth = (dateStr: string) => {
 
-  console.log(123)
-  console.log(dateStr)
 
   const date = new Date(dateStr);
 
@@ -189,7 +197,7 @@ interface LoadCardResponse {
 // Загрузка карточек из базы данных
 const loadCards = async (id : string) => {
   try {
-    const response = await $fetch<LoadCardResponse>('/api/load-card-by-id', {
+    const response = await $fetch<LoadCardResponse>('/api/loadCardById', {
       method: 'POST',
       body: { id }
     })
@@ -207,6 +215,27 @@ const loadCards = async (id : string) => {
 
 };
 
+const shareEvent = (eventId) => {
+  const eventUrl = `https://t.me/Board_demo_bot/my_board_app?startapp=event_${eventId}`;
+  const eventName = currentCard.value?.event_name || 'Мероприятие';
+  const shareText = `Посмотри это мероприятие: ${eventName}`;
+
+  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(shareText)}`;
+
+  // Используй Telegram WebApp API
+  const { WebApp } = useWebApp();
+
+  if (WebApp && WebApp.openTelegramLink) {
+    WebApp.openTelegramLink(telegramShareUrl);
+  } else {
+    // Фолбэк на случай, если openTelegramLink недоступен
+    window.open(telegramShareUrl, '_blank');
+  }
+};
+
+const goToSwipe = () => {
+  router.push('/');
+};
 
 
 
