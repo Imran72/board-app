@@ -1,85 +1,79 @@
 .saved_events_page {
-
-    margin-top: 60px;
-    padding: 0;
+    margin-top: 60px; /* Отступ сверху для заголовка */
+    padding: 0; /* Убираем внутренние отступы */
     background-color: #000; /* Чёрный фон */
     color: white; /* Белый текст */
-    min-height: 100vh;
+    min-height: 100vh; /* Минимальная высота на весь экран */
 }
 
 .events_container {
-
-    display: flex;
+    display: flex; /* Используем flexbox для расположения */
     flex-wrap: wrap; /* Элементы переносятся на новую строку при недостатке места */
     gap: 1px; /* Отступы между мероприятиями */
-    justify-content: center; /* Центрируем элементы */
-
-
+    justify-content: center; /* Центрируем элементы по горизонтали */
 }
 
 .event_card {
-    display: flex;
+    display: flex; /* Используем flexbox */
     flex-direction: row; /* Располагаем элементы в строку */
-    align-items: center; /* Выравниваем элементы по центру */
-    background-color: #000;
-    border-radius: 10px;
+    align-items: center; /* Выравниваем элементы по центру по вертикали */
+    background-color: #000; /* Чёрный фон карточки */
+    border-radius: 10px; /* Скругленные углы */
     width: 100%; /* Растягиваем на всю ширину */
-    min-width: 350px;
-    overflow: hidden;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    color: white;
-    padding: 10px; /* Добавляем отступы */
+    min-width: 350px; /* Минимальная ширина карточки */
+    overflow: hidden; /* Скрываем выходящий за границы контент */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Тень карточки */
+    color: white; /* Белый текст */
+    padding: 10px; /* Внутренние отступы */
 }
 
 .event_image {
-    width: 83px;
-    height: 124px;
-    border-radius: 9px;
-    margin: 0 15px 0 15px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    width: 83px; /* Фиксированная ширина изображения */
+    height: 124px; /* Фиксированная высота изображения */
+    border-radius: 9px; /* Скругленные углы изображения */
+    margin: 0 15px 0 15px; /* Отступы слева и справа */
+    display: flex; /* Используем flexbox для центрирования */
+    justify-content: center; /* Центрируем по горизонтали */
+    align-items: center; /* Центрируем по вертикали */
 }
 
 .event_image img {
-    width: 100%;
-    height: 100%;
+    width: 100%; /* Занимает всю ширину контейнера */
+    height: 100%; /* Занимает всю высоту контейнера */
     object-fit: cover; /* Изображение заполняет контейнер без искажений */
-    border-radius: 9px;
+    border-radius: 9px; /* Скругленные углы */
 }
 
 .event_details {
-    padding: 15px;
+    padding: 15px; /* Внутренние отступы */
 }
 
 .event_name {
-    font-size: 18px;
-    font-weight: bold;
-    margin: 0 0 5px 0;
+    font-size: 18px; /* Размер шрифта */
+    font-weight: bold; /* Жирный шрифт */
+    margin: 0 0 5px 0; /* Отступы: сверху 0, снизу 5px, слева и справа 0 */
 }
 
 .event_host {
-    font-size: 14px;
+    font-size: 14px; /* Размер шрифта */
     color: #a9a9a9; /* Серый цвет текста */
-    margin: 0 0 10px 0;
+    margin: 0 0 10px 0; /* Отступы: сверху 0, снизу 10px, слева и справа 0 */
 }
 
 .event_meta {
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 14px; /* Размер шрифта */
+    line-height: 1.5; /* Высота строки */
     width: 100%; /* Растягиваем на всю ширину */
 }
 
-
 .event_meta .icon {
-    margin-right: 5px;
-
+    margin-right: 5px; /* Отступ справа от иконки */
 }
 
 .event_meta div {
-    display: flex;
-    align-items: center;
-    margin-bottom: 5px;
+    display: flex; /* Используем flexbox */
+    align-items: center; /* Выравниваем элементы по центру */
+    margin-bottom: 5px; /* Отступ снизу */
 }
 
 .event_separator {
@@ -88,4 +82,55 @@
     background-color: #444; /* Серый цвет */
     margin: 10px 0; /* Отступ сверху и снизу */
     opacity: 0.6; /* Немного прозрачности */
+}
+
+.status_badge {
+    padding: 8px 16px; /* Внутренние отступы */
+    border-radius: 20px; /* Скругленные углы */
+    font-size: 14px; /* Размер шрифта */
+    font-weight: bold; /* Жирный шрифт */
+    color: white; /* Белый текст */
+    text-align: center; /* Центрирование текста */
+    margin-top: 10px; /* Отступ сверху */
+    align-self: flex-start; /* Выравнивание по левому краю */
+}
+
+.status_moderation {
+    background-color: #f0ad4e; /* Оранжевый цвет для модерации */
+}
+
+.status_rejected {
+    background-color: #d9534f; /* Красный цвет для отклоненных */
+}
+
+.status_approved {
+    background-color: #5cb85c; /* Зеленый цвет для одобренных */
+}
+
+.loading, .no_events, .error_message {
+    text-align: center; /* Центрирование текста */
+    margin-top: 50px; /* Отступ сверху */
+    font-size: 18px; /* Размер шрифта */
+    color: #888; /* Серый цвет */
+}
+
+.error_message {
+    color: #d9534f; /* Красный цвет для ошибок */
+}
+
+.event_date {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.date_section, .time_section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date_info, .time_info {
+  display: flex;
+  flex-direction: column;
 }

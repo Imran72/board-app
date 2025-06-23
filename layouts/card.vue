@@ -1,12 +1,13 @@
 <script setup lang="ts">
+
 import { onMounted } from 'vue';
 
-// Проверяем, есть ли Telegram WebApp API
+
 interface TelegramWebApp {
   WebApp: {
     BackButton: {
-      show: () => void;
-      hide: () => void;
+      show: () => void; // Показать кнопку "Назад"
+      hide: () => void; // Скрыть кнопку "Назад"
       onClick: (callback: () => void) => void;
     };
     close: () => void;
@@ -16,36 +17,44 @@ interface TelegramWebApp {
   };
 }
 
-const route = useRoute();
-const router = useRouter();
+const route = useRoute(); // Доступ к текущему маршруту и его параметрам
+const router = useRouter(); // Доступ к роутеру для программной навигации
 
 onMounted(() => {
-  if (process.client && (window as any).Telegram?.WebApp) { // process.client — чтобы убедиться, что код выполняется на клиенте (не на сервере)
-    // window.Telegram?.WebApp — проверяем доступность Telegram WebApp API
+  // Проверяем, что код выполняется на клиенте и доступен Telegram WebApp API
+  if (process.client && (window as any).Telegram?.WebApp) {
+    // Получаем доступ к Telegram WebApp API
     const tg = (window as any).Telegram.WebApp as TelegramWebApp['WebApp'];
-    // Сохраняем Telegram WebApp API в переменной tg и явно указываем его тип
-    tg.BackButton.show(); // Показываем кнопку назад в Telegram WebApp
+    
+    // Показываем кнопку "Назад" в Telegram WebApp
+    tg.BackButton.show();
 
+    // Устанавливаем обработчик клика на кнопку "Назад"
     tg.BackButton.onClick(() => {
-
-
-      const eventId = route.params.id; // Достаём id события из роута
-      if (window.history.length > 1) {
-        // Проверяем, есть ли история переходов, чтобы решить — возвращаться назад или закрывать WebApp
-        const returnPath = route.query.from || '/'; // Берём путь точки входа
-        console.log(returnPath);
-
-        router.push({ path: (returnPath as string), query: { scrollTo: eventId } });
-
-      } else {
+      // Проверяем, есть ли параметр fromShare=true в URL
+      if (route.query.fromShare === 'true') {
+        // Если пользователь пришел по прямой ссылке, ведем на главную
+        router.push('/');
+      } 
+      // Проверяем, пришел ли пользователь со страницы "Мои события"
+      else if (route.query.from === '/myEvents') {
+        // Возвращаемся на страницу "Мои события"
+        router.push('/myEvents');
+      } 
+      // Проверяем, есть ли история переходов в браузере
+      else if (window.history.length > 1) {
+        // Если есть история, возвращаемся назад
+        const returnPath = route.query.from || '/';
+        router.push({ path: (returnPath as string) });
+      } 
+      // В остальных случаях закрываем приложение
+      else {
         tg.close();
       }
 
+      // Скрываем кнопку "Назад" после обработки клика
       tg.BackButton.hide();
-      // Скрываем кнопку назад, чтобы она не дублировалась после возвращения
-
     });
-
   } else {
     console.error('Telegram WebApp API недоступен');
   }
@@ -53,15 +62,9 @@ onMounted(() => {
 
 </script>
 
-
 <template>
-
   <NuxtPage />
-
 </template>
 
-
-
 <style scoped>
-
 </style>

@@ -1,8 +1,6 @@
 <template>
   <div class="swipe-container">
 
-
-
     <div
         v-if="currentCard"
         class="card"
@@ -11,7 +9,7 @@
         @touchstart="startDrag"
         @click="goToEvent(currentCard.event_id)"
     >
-<!--      v-if: показывает карточку только если данные текущей карточки загружены-->
+
 
 
       <img :src="currentCard.event_banner" alt="Event Banner" class="card-image" />
@@ -27,7 +25,6 @@
 
 
         <div  class="likes-container">
-<!--        <div class="event-likes">235 сохранили</div>-->
           <div class="event-likes">{{ likesCount || 0 }} сохранили</div>
         </div>
 
@@ -41,14 +38,14 @@
 
 
         <div  class="buttons-container">
-              <button class="share-button2" @click.stop="shareEvent(currentCard.event_id)">
-                <img src="/icons/share_button.svg" alt="Поделиться" />
-              </button>
+          <button class="share-button2" @click.stop="shareEvent(currentCard.event_id)">
+            <img src="/icons/share_button.svg" alt="Поделиться" />
+          </button>
 
 
-              <button class="share-button2" @click.stop="backEvent()">
-                <img src="/icons/back_button.svg" alt="Поделиться" />
-              </button>
+          <button class="share-button2" @click.stop="backEvent()">
+            <img src="/icons/back_button.svg" alt="Поделиться" />
+          </button>
 
         </div>
 
@@ -62,7 +59,7 @@
 <script setup lang="ts">
 
 
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import './assets/swiper.css';
 import {useWebApp} from "vue-tg";
 import { v5 as uuidv5 } from 'uuid';
@@ -299,14 +296,11 @@ const route = useRoute();
 
 // Загружаем карточки при монтировании компонента
 onMounted(async () => {
-
-
   // Отключаем скролл
   document.body.style.overflow = 'hidden';
 
   // последняя карточка, которую видел пользователь
   const savedEventId = localStorage.getItem('last_event_id');
-
 
   if (route.query.scrollTo) {
     await initCards(route.query.scrollTo)
@@ -314,24 +308,28 @@ onMounted(async () => {
     await initCards(parseInt(savedEventId));
   }
 
-
   dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
   gradientBackgroundColor.value = await gradientBackground();
 
-
+  if (typeof window !== 'undefined' && sessionStorage.getItem('deepLinkExit') === '1') {
+    showExitButton.value = true;
+  }
 });
 
 
-const shareEvent = (card) => {
-  const eventUrl = `@board_mini_app_bot`;
-  const text =  ``;
-  // const text = `Посмотри это мероприятие: ${card.event_name}`;
+const shareEvent = (eventId) => {
+  const eventUrl = `https://t.me/Board_demo_bot/my_board_app?startapp=event_${eventId}`;
+  const eventName = currentCard.value?.event_name || 'Мероприятие';
+  // Обычный текст, как было раньше
+  const shareText = `Посмотри это мероприятие:`;
+  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(shareText + ' ' + eventName)}`;
+  const { WebApp } = useWebApp();
 
-  // Ссылка для открытия Telegram
-  const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(eventUrl)}&text=${encodeURIComponent(text)}`;
-
-  // Открыть Telegram с указанной ссылкой
-  window.open(telegramShareUrl, '_blank');
+  if (WebApp && WebApp.openTelegramLink) {
+    WebApp.openTelegramLink(telegramShareUrl);
+  } else {
+    window.open(telegramShareUrl, '_blank');
+  }
 };
 
 

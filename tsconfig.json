@@ -1,4 +1,10 @@
 {
-  // https://nuxt.com/docs/guide/concepts/typescript
-  "extends": "./.nuxt/tsconfig.json"
+  "extends": "./.nuxt/tsconfig.json",
+
+  // Настройки компилятора TypeScript
+  "compilerOptions": {
+    // Отключаем строгий режим проверки типов
+    // Это позволяет более гибко работать с типами в проекте
+    "strict": false
+  }
 }

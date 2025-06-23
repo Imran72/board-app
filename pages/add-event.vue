@@ -1,12 +1,11 @@
 <script setup lang="ts">
 
-// Nuxt-функция, которая позволяет указать параметры страницы
 definePageMeta({
   layout: 'header',
 });
 
 interface Response {
-  success?: boolean // ? значит «необязательное поле»
+  success?: boolean
   error?: string
 }
 
@@ -15,27 +14,21 @@ interface UploadImageResponse {
   error?: string
 }
 
-import { ref } from "vue"; // способ создать реактивную переменную, которая обновляется и автоматически перерисовывает компонент при изменении
-import styles from "./assets/event_create.module.css"; // Подключаем модульные стили
-
+import { ref, computed } from "vue";
+import styles from "./assets/event_create.module.css";
+import { useWebApp } from "vue-tg";
 
 const eventStart = ref("");
 const eventEnd = ref("");
 
-
-
-// Функция для вычисления ближайшего часа
 const getNearestHourMoscow = () => {
-  // Текущее время в Москве (UTC+3)
   const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Moscow" }));
 
-  now.setMinutes(0, 0, 0); // Обнуляем минуты и секунды
-  now.setHours(now.getHours() + 1); // Прибавляем 1 час
+  now.setMinutes(0, 0, 0);
+  now.setHours(now.getHours() + 1);
 
-  // Преобразуем в формат для input[type="datetime-local"]
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0"); // Месяцы с 0
-  // padStart() в JavaScript используется для дополнения строки до нужной длины указанными символами в начале
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // Месяцы с 0, добавляем ведущий ноль
   const day = String(now.getDate()).padStart(2, "0");
   const hours = String(now.getHours()).padStart(2, "0");
   const minutes = "00"; // Всегда ставим ровный час
@@ -43,67 +36,21 @@ const getNearestHourMoscow = () => {
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
-
 const eventDesc = ref("");
-const tempDesc = ref("");
+const tempDesc = ref(""); // Временное описание для модального окна
 const showDescModal = ref(false);
 
-// Закрытие окна описания
 const closeDescModal = () => {
-  showDescModal.value = false; // Скрываем модальное окно
-  document.body.style.overflow = ""; // Разблокируем прокрутку страницы
+  showDescModal.value = false;
+  document.body.style.overflow = ""; // Восстанавливаем скролл страницы
 };
 
-// Сохранение описания
 const saveDescription = () => {
-  eventDesc.value = tempDesc.value.trim(); // Копируем временное описание в основное (trim() удаляет пробелы по краям)
+  eventDesc.value = tempDesc.value.trim(); // Убираем лишние пробелы
   closeDescModal();
 };
 
-
-// Функция загрузки изображения
-const uploadImage = async (event) => {
-
-  const file = event.target.files[0]; // Здесь мы берём первый (и единственный) выбранный файл
-  // из input (возможность выбора нескольких файлов можно добавить, но сейчас берём только первый).
-
-  if (!file) return; // Если файл не выбран (например,
-  // пользователь отменил диалог выбора файла), функция сразу завершает выполнение.
-
-  const formData = new FormData()
-  formData.append('file', file)
-
-  try {
-    const response = await $fetch<UploadImageResponse>('/api/uploadImage', {
-      method: 'POST',
-      body: formData
-    }) // Делаем POST-запрос на эндпоинт /api/uploadImage, отправляя туда файл.
-    // $fetch — это Nuxt-специфичная функция (обёртка над fetch), которая позволяет указывать тип ответа (UploadImageResponse)
-
-    if (response.error) {
-      alert('Ошибка загрузки файла')
-      console.error('Ошибка:', response.error)
-      return
-    }
-
-    eventBanner.value = response.url
-  } catch (err) {
-    alert('Ошибка при отправке запроса')
-    console.error(err)
-  }
-
-
-};
-
-
-
-
-// Поля формы
 const eventBanner = ref(null);
-
-
-
-
 const eventName = ref("");
 const eventPrice = ref("");
 const eventApproval = ref(false);
@@ -113,21 +60,20 @@ const eventLocation = ref("");
 const eventPriceStatus = ref("Бесплатно");
 const eventVisibility = ref("Публичное");
 const eventCapacity = ref("Limited");
-
+const uploadNotification = ref('');
+const uploadNotificationType = ref('');
 
 const closeKeyboard = (event: Event) => {
-  // Функция для "сворачивания" клавиатуры на мобильных (или снятия фокуса).
-
   const target = event.target as HTMLElement;
-
 
   if (target.closest("select")) return;
 
-  // Если клик НЕ по инпуту и НЕ по текстовой области, убираем фокус
   if (target && !target.closest("input, textarea")) {
-    document.activeElement?.blur();
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
   }
-  // при нажатии вне формы клавиатура убирается
 };
 
 onMounted(() => {
@@ -137,39 +83,26 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  document.removeEventListener("click", closeKeyboard); // При удалении компонента со страницы убираем слушатель событий, чтобы избежать утечек памяти.
+  // Удаляем обработчик клика
+  document.removeEventListener("click", closeKeyboard);
 });
-
 
 const isFormValid = computed(() => {
-
-  if (eventPriceStatus.value == 'Бесплатно'){
-    return eventName.value &&
-        eventStart.value &&
-        eventEnd.value &&
-        eventLocation.value &&
-        eventDesc.value &&
-        eventTags.value &&
-        eventLinks.value &&
-        eventBanner.value;
-  }
-
-  return eventName.value &&
-      eventStart.value &&
-      eventEnd.value &&
-      eventLocation.value &&
-      eventDesc.value &&
-      eventTags.value &&
-      eventLinks.value &&
-      eventBanner.value &&
-      eventPrice.value;
+  return !!eventName.value;
 });
 
-
 const createEvent = async () => {
-
-
+  console.log('Клик по кнопке!');
+  // Проверяем валидность формы
   if (!isFormValid.value) {
+    return;
+  }
+
+  const { initDataUnsafe } = useWebApp();
+  const userId = initDataUnsafe?.user?.id;
+
+  if (!userId) {
+    alert('Ошибка: не удалось определить пользователя');
     return;
   }
 
@@ -189,21 +122,20 @@ const createEvent = async () => {
       event_price: eventPrice.value,
       event_visibility: eventVisibility.value,
       event_capacity: eventCapacity.value,
+      user_id: userId
     }
   });
 
-
   if (response.error) {
     console.error('Ошибка:', response.error);
+    alert('Ошибка: ' + response.error);
   } else {
     console.log('Успешное добавление события');
-    resetForm();
+    resetForm(); // Сбрасываем форму
     alert("Поздравляю! Ваше мероприятие отправлено на модерацию...");
   }
-
 };
 
-// Функция для сброса всех полей формы.
 const resetForm = () => {
   eventName.value = "";
   eventStart.value = getNearestHourMoscow();
@@ -212,24 +144,64 @@ const resetForm = () => {
   eventDesc.value = "";
   eventTags.value = "";
   eventLinks.value = "";
-  eventBanner.value = null; // Очищаем картинку
-
+  eventBanner.value = null;
 };
 
+const uploadImage = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  uploadNotification.value = 'Загрузка фото...';
+  uploadNotificationType.value = 'loading';
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  try {
+    const response = await $fetch<UploadImageResponse>('/api/uploadImage', {
+      method: 'POST',
+      body: formData
+    })
+
+    if (response.error) {
+      console.error('Ошибка:', response.error)
+      uploadNotification.value = 'Ошибка загрузки файла';
+      uploadNotificationType.value = 'error';
+      setTimeout(() => {
+        uploadNotification.value = '';
+        uploadNotificationType.value = '';
+      }, 3000);
+      return
+    }
+
+    eventBanner.value = response.url
+    uploadNotification.value = 'Фото успешно загружено!';
+    uploadNotificationType.value = 'success';
+    setTimeout(() => {
+      uploadNotification.value = '';
+      uploadNotificationType.value = '';
+    }, 3000);
+  } catch (err) {
+    console.error(err)
+    uploadNotification.value = 'Ошибка при отправке запроса';
+    uploadNotificationType.value = 'error';
+    setTimeout(() => {
+      uploadNotification.value = '';
+      uploadNotificationType.value = '';
+    }, 3000);
+  }
+};
 
 </script>
 
 <template>
   <div :class="styles.eventCreatePage">
 
-    <!-- Заголовок -->
     <div :class="styles.pageTitle">Создать событие</div>
 
-    <!-- Карточка изображения -->
     <div :class="styles.imageUpload">
       <div :class="styles.imagePlaceholder">
         <img v-if="eventBanner" :src="eventBanner" alt="Event Image" :class="styles.thumbnail" />
-        <!--если переменная eventBanner содержит ссылку на изображение, то этот тег отобразится.-->
         <label :class="styles.uploadIcon">
           <img src="/icons/add_photo_ae.svg" alt="Upload Image"/>
           <input type="file" ref="fileInput" :class="styles.hidden_input" @change="uploadImage" accept="image/*" />
@@ -237,16 +209,16 @@ const resetForm = () => {
 
       </div>
     </div>
+    <div v-if="uploadNotification" :class="[styles.uploadNotification, styles[uploadNotificationType]]">
+      {{ uploadNotification }}
+    </div>
 
-
-    <!-- Поля ввода -->
     <div :class="styles.inputGroup">
       <input type="text" :class="styles.inputFieldName" placeholder="Название события" v-model="eventName" />
     </div>
 
     <div :class="styles.inputGroupDateTime">
 
-      <!-- Начало -->
       <div :class="styles.inputContainer">
         <img src="/icons/start_ae.svg" :class="styles.icon" alt="Начало" />
         <div :class="styles.inputFieldHalf2">Начало</div>
@@ -263,7 +235,6 @@ const resetForm = () => {
 
     </div>
 
-
     <div :class="styles.inputGroup">
       <div :class="styles.inputContainer">
         <img src="/icons/location_ae.svg" :class="styles.icon" alt="Выберите место" />
@@ -271,9 +242,6 @@ const resetForm = () => {
       </div>
     </div>
 
-
-
-    <!-- Описание  -->
     <div :class="styles.inputGroup">
       <div :class="styles.inputContainer" >
         <img src="/icons/desc_ae.svg" :class="styles.icon" alt="Добавьте описание" />
@@ -281,7 +249,6 @@ const resetForm = () => {
       </div>
     </div>
 
-    <!-- Всплывающее окно для ввода описания -->
     <teleport to="body">
       <transition name="fade">
         <div v-if="showDescModal" :class="styles.modal_overlay" @click="closeDescModal">
@@ -300,15 +267,10 @@ const resetForm = () => {
       </transition>
     </teleport>
 
-
-
-
-
     <div :class="styles.comment">
       <div>Используйте теги для вашего мероприятия</div>
       <div>Чем больше тегов, тем точнее алгоритм</div>
     </div>
-
 
     <div :class="styles.inputGroup">
       <div :class="styles.inputContainer">
@@ -328,7 +290,6 @@ const resetForm = () => {
       </div>
     </div>
 
-
     <div :class="styles.big_divider"></div>
 
     <div :class="styles.titleContainer">
@@ -337,11 +298,9 @@ const resetForm = () => {
 
     <div :class="styles.inputGroupDateTime">
 
-
       <div :class="styles.inputContainer">
         <img src="/icons/approval_ae.svg" :class="styles.icon" alt="Требуется одобрение" />
         <input type="text" :class="styles.inputFieldHalf" placeholder="Требуется одобрение" readonly />
-
 
         <label :class="styles.switch">
           <input type="checkbox" v-model="eventApproval" />
@@ -349,7 +308,6 @@ const resetForm = () => {
         </label>
 
       </div>
-
 
       <div :class="styles.divider"></div>
       <div :class="styles.inputContainer">
@@ -363,13 +321,11 @@ const resetForm = () => {
       </div>
     </div>
 
-
     <div :class="styles.titleContainer">
       <div :class="styles.title">Опции</div>
     </div>
 
     <div :class="styles.inputGroupDateTime">
-
 
       <div :class="styles.inputContainer">
         <img src="/icons/visibility_ae.svg" :class="styles.icon" alt="Видимость" />
@@ -383,7 +339,6 @@ const resetForm = () => {
 
       </div>
 
-
       <div :class="styles.divider"></div>
       <div :class="styles.inputContainer">
         <img src="/icons/capacity_ae.svg" :class="styles.icon" alt="Вместимость" />
@@ -396,23 +351,16 @@ const resetForm = () => {
       </div>
     </div>
 
-
-
-
-    <!-- Кнопка создания -->
     <button
         :class="[styles.submitButton, isFormValid ? styles.activeButton : styles.disabledButton]"
-        :disabled=!isFormValid
+        :disabled="!isFormValid"
         @click="createEvent"
     >
       Создать событие
     </button>
 
-
   </div>
 </template>
 
 <style scoped>
-
-
 </style>

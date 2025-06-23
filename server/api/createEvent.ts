@@ -1,4 +1,3 @@
-// server/api/create-event.ts
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
@@ -9,6 +8,7 @@ export default defineEventHandler(async (event) => {
 
     const { error } = await supabase.from('events_raw').insert([
         {
+            user_id: body.user_id,
             event_name: body.event_name,
             event_banner: body.event_banner,
             event_start_dttm: body.event_start_dttm,

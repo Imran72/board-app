@@ -7,12 +7,10 @@ definePageMeta({
 
 
 import {useRouter} from "#vue-router";
-// Vue Router (для переходов между страницами)
 import styles from './assets/favorites.module.css';
 import {onMounted, ref} from "vue";
 import {useWebApp} from "vue-tg";
 import { format } from 'date-fns';
-// date-fns (для форматирования дат)
 import { ru } from 'date-fns/locale';
 
 interface Event {
@@ -27,7 +25,6 @@ interface Event {
 
 const favorite_events = ref<Event[]>([]);
 
-// Загружаем карточки при монтировании компонента
 onMounted(() => {
 
   console.log(getComputedStyle(document.body).fontFamily);
@@ -91,24 +88,19 @@ const shortWeekdays = {
   воскресенье: "Вс",
 };
 
-const capitalizeMonth = (dateStr: string) => { // Принимает строку с датой.
+const getDateLine1 = (dateStr: string) => {
   const date = new Date(dateStr);
-
-  // Получаем полное название дня недели и месяца
-  const fullWeekday = format(date, "EEEE", { locale: ru }); // "понедельник"
-  const formattedDate = format(date, "d MMMM", { locale: ru }); // "1 января"
-
-  // Делаем первую букву месяца заглавной
-  const capitalizedMonth = formattedDate.replace(/\s(\p{L})/u, (match) => match.toUpperCase());
-
-  // Получаем сокращённый день недели
-  const shortWeekday = shortWeekdays[fullWeekday.toLowerCase()] || fullWeekday;
-
-  return `${shortWeekday}, ${capitalizedMonth}`;
+  const fullWeekday = format(date, 'EEEE', { locale: ru });
+  const dayOfMonth = format(date, 'd');
+  const shortWeekday = shortWeekdays[fullWeekday.toLowerCase()];
+  return `${shortWeekday}, ${dayOfMonth}`;
 };
 
-
-
+const getDateLine2 = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const month = format(date, 'MMMM', { locale: ru });
+  return month.charAt(0).toUpperCase() + month.slice(1);
+};
 
 </script>
 
@@ -118,10 +110,9 @@ const capitalizeMonth = (dateStr: string) => { // Принимает строк�
       <div
           :class="styles.event_card"
           v-for="(event, index) in favorite_events"
-          :key="index"
-          @click="goToEvent(event.event_id)">
+          :key="index">
 
-        <div :class="styles.event_image">
+        <div :class="styles.event_image" @click="goToEvent(event.event_id)">
           <img v-if="event.event_banner" :src="event.event_banner" alt="Event Banner" />
         </div>
 
@@ -131,16 +122,20 @@ const capitalizeMonth = (dateStr: string) => { // Принимает строк�
           <p :class="styles.event_host">@{{event.event_host}}</p>
           <div :class="styles.event_meta">
             <div :class="styles.event_date">
-              <span :class="styles.icon">
-                <img src="/icons/Date.svg" />
-              </span>
-              <span :class="styles.icon">
-                {{ capitalizeMonth(event.event_date) }}
-              </span>
-              <span :class="styles.icon">
-                <img src="/icons/Time.svg" />
-              </span>
-              <span>{{event.event_time}} GMT+3</span>
+              <div :class="styles.date_section">
+                <img src="/public/icons/Date.svg" alt="Date" />
+                <div :class="styles.date_info">
+                  <span>{{ getDateLine1(event.event_date) }}</span>
+                  <span>{{ getDateLine2(event.event_date) }}</span>
+                </div>
+              </div>
+              <div :class="styles.time_section">
+                <img src="/public/icons/Time.svg" alt="Time" />
+                <div :class="styles.time_info">
+                  <span>{{ event.event_time }}</span>
+                  <span>GMT+3</span>
+                </div>
+              </div>
             </div>
             <div :class="styles.event_location">
               <span :class="styles.icon">
