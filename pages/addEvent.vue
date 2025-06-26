@@ -123,9 +123,12 @@ const closeKeyboard = (event: Event) => {
 };
 
 onMounted(() => {
+
   document.addEventListener("click", closeKeyboard);
   eventStart.value = getNearestHourMoscow();
   eventEnd.value = getNearestHourMoscow();
+
+
 });
 
 onUnmounted(() => {

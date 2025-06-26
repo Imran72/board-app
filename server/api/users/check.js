@@ -1,4 +1,4 @@
-import { supabase } from '~/plugins/supabase';
+import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
     // Чтение данных из тела запроса

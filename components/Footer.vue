@@ -12,7 +12,7 @@ const router = useRouter();
 const footerItems = [
   { name: 'Топ', icon: '/icons/top.svg', route: '/top', active_icon: '/icons/top-white.svg'},
   { name: 'Лента', icon: '/icons/swipe.svg', route: '/', active_icon: '/icons/swipe-white.svg'},
-  { name: 'Добавить Событие', icon: '/icons/add_event.svg', route: '/add-event', active_icon: '/icons/add_event-white.svg'},
+  { name: 'Добавить Событие', icon: '/icons/add_event.svg', route: '/addEvent', active_icon: '/icons/add_event-white.svg'},
   { name: 'Избранное', icon: '/icons/favorites.svg', route: '/favorites', active_icon: '/icons/favorites-white.svg'}
 ];
 
