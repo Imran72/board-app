@@ -1,32 +1,32 @@
 // server/api/upload-image.ts
-import { createClient } from '@supabase/supabase-js'
-import { randomUUID } from 'crypto'
+import supabase from '../utils/supabaseClient';
 
 export default defineEventHandler(async (event) => {
-    const config = useRuntimeConfig()
-    const supabase = createClient(config.supabaseUrl, config.supabaseKey)
+  const client = await supabase(event);
+  const body = await readBody(event);
 
-    const form = await readMultipartFormData(event)
-    const file = form?.find(f => f.name === 'file')
+  try {
+    const { data, error } = await client.storage
+      .from('event-images')
+      .upload(body.path, body.file, {
+        contentType: body.contentType,
+        upsert: true
+      });
 
-    if (!file) {
-        return { error: 'Файл не найден' }
+    if (error) {
+      console.error('Ошибка при загрузке изображения:', error);
+      throw createError({
+        statusCode: 500,
+        message: `Ошибка при загрузке изображения: ${error.message}`,
+      });
     }
 
-    const fileName = `events/event_${randomUUID()}`
-
-    const { error } = await supabase.storage
-        .from('Board storage')
-        .upload(fileName, file.data, {
-            contentType: file.type,
-            upsert: true
-        })
-
-    if (error) return { error: error.message }
-
-    const { data: publicUrl } = supabase.storage
-        .from('Board storage')
-        .getPublicUrl(fileName)
-
-    return { url: publicUrl?.publicUrl || '' }
-})
+    return { success: true, data };
+  } catch (e: any) {
+    console.error('Исключение при загрузке изображения:', e);
+    throw createError({
+      statusCode: 500,
+      message: `Ошибка сервера: ${e.message}`,
+    });
+  }
+});

@@ -2,8 +2,8 @@
 import { onMounted } from 'vue';
 
 onMounted(() => {
-  if (window.Telegram?.WebApp) {
-    Telegram.WebApp.expand(); // Расширяет приложение
+  if ((window as any).Telegram?.WebApp) {
+    (window as any).Telegram.WebApp.expand(); // Расширяет приложение
   }
 });
 </script>

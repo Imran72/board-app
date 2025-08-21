@@ -16,7 +16,6 @@ import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 interface topEvent {
-
   event_id: string;
   event_name: string;
   event_host: string;
@@ -24,7 +23,9 @@ interface topEvent {
   event_time: string;
   event_location: string;
   event_banner: string;
-
+  organizer?: {
+    user_name: string;
+  };
 }
 
 const top_events = ref<topEvent[]>([]);
@@ -112,6 +113,15 @@ const capitalizeMonth = (dateStr: string) => {
   return `${shortWeekday}, ${capitalizedMonth}`;
 };
 
+// Функция для получения никнейма организатора
+const getOrganizerName = (event: topEvent) => {
+  if (event.organizer && event.organizer.user_name) {
+    return event.organizer.user_name;
+  }
+  
+  // Fallback на ID если данных об организаторе нет
+  return `@${event.event_host}`;
+};
 
 
 </script>
@@ -150,7 +160,7 @@ const capitalizeMonth = (dateStr: string) => {
         <div :class="styles.event_details">
 
           <h3 :class="styles.event_name">{{event.event_name}}</h3>
-          <p :class="styles.event_host">@{{event.event_host}}</p>
+          <p :class="styles.event_host">{{ getOrganizerName(event) }}</p>
           <div :class="styles.event_meta">
             <div :class="styles.event_date">
               <span :class="styles.icon">

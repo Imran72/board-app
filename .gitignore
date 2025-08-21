@@ -25,3 +25,5 @@ logs
 
 # Project exclude paths
 /content/Events.d.ts
+
+.cursorrules

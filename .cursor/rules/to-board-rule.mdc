@@ -1,0 +1,39 @@
+---
+# Nuxt.js + Vue.js + TypeScript + Telegram Bot CursorRules
+
+description: "Architecture and code style rules for projects using Nuxt.js, Vue.js, TypeScript, and Telegram Bot moderation features."
+globs: [ "*.vue", "*.ts", "*.js" ]
+alwaysApply: true
+
+## TypeScript
+- Avoid `any` and `unknown` types. Always use strict typing.
+- Define interfaces for API responses, Telegram events, and user-generated event models.
+- Prefer type-safe enums and constants for event/action types.
+- Use type inference and generics where appropriate.
+
+## Vue.js & Nuxt.js
+- Use only functional, composition API components.
+- All components must implement PropTypes and emit events with strict typing.
+- Use Nuxt `useHead` and `useSeoMeta` hooks for handling SEO data.
+- Optimize performance: use lazy-loading (`defineAsyncComponent`), memoization, and limit prop-passing depth.
+- Ensure accessibility with semantic HTML and appropriate ARIA attributes.
+- Use `<NuxtImage>`, `<NuxtPicture>`, and Nuxt Icons where possible for media assets.
+- Follow Vue and Nuxt file organization: `/components`, `/composables`, `/pages`, `/layouts`.
+
+## Telegram Bot (Moderation Logic)
+- All command handlers must be defined in isolated modules.
+- Describe all commands, payloads, and responses with TypeScript interfaces.
+- Use strong error handling: implement retry/fallback logic in all API requests.
+- Validate and normalize all incoming data from users/events.
+- Cover all moderation workflows with tests (unit/integration).
+
+## HTML/CSS & Cursor
+- Use `cursor: pointer` only on interactive elements (buttons, links, clickable cards).
+- Use `cursor: not-allowed` for all disabled controls (inputs, buttons, custom UI).
+- Use `cursor: move` for draggable interfaces (drag and drop).
+- For visually custom cursors, provide appropriate fallback cursors and maintain accessibility.
+- Do not override browser default cursor except for strong UX reasons.
+
+**Note:** These CursorRules are suitable for multi-platform, type-safe, modular web applications with user-generated content and Telegram Bot API integrations. Adapt specifics as needed for your own project structure and code conventions.
+
+---

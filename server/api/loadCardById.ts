@@ -1,27 +1,55 @@
 // /server/api/loadCardById.ts
-import { createClient } from '@supabase/supabase-js'
+import supabase from '../utils/supabaseClient';
 
 export default defineEventHandler(async (event) => {
-    const { id } = await readBody(event)
-    const config = useRuntimeConfig()
-    const supabase = createClient(config.supabaseUrl, config.supabaseKey)
+  const client = await supabase(event);
+  const { eventId } = await readBody(event);
 
-    // Запрашиваем все поля, включая favorites_count
-    const { data, error } = await supabase
-        .from('events')
-        .select('*') // Просто и надежно
-        .eq('event_id', id)
-        .single()
+  if (!eventId) {
+    setResponseStatus(event, 400);
+    return { error: 'Event ID is required' };
+  }
 
-    if (error) {
-        setResponseStatus(event, 500);
-        return { error: error.message }
-    }
-    
-    // Добавляем защиту на случай, если events_stats будет использоваться где-то еще
-    if (data && !data.events_stats) {
-        data.events_stats = [{ uniq_users_likes: Number(data.favorites_count) || 0 }];
-    }
+  console.log('loadCardById вызван с id:', eventId);
 
-    return { data }
+  // Сначала загружаем событие
+  const { data: eventData, error: eventError } = await client
+      .from('events')
+      .select('*')
+      .eq('event_id', eventId)
+      .single()
+
+  if (eventError) {
+      console.error('Ошибка при загрузке события:', eventError);
+      setResponseStatus(event, 500);
+      return { error: eventError.message }
+  }
+
+  console.log('Событие загружено:', eventData);
+
+  // Теперь загружаем данные пользователя отдельно
+  if (eventData.event_host) {
+      const { data: userData, error: userError } = await client
+          .from('users')
+          .select('user_name')
+          .eq('user_id', eventData.event_host)
+          .single()
+
+      if (userError) {
+          console.error('Ошибка при загрузке пользователя:', userError);
+      } else {
+          console.log('Данные пользователя:', userData);
+          // Добавляем данные пользователя к событию
+          (eventData as any).organizer = userData;
+      }
+  }
+
+  console.log('Финальные данные события:', JSON.stringify(eventData, null, 2));
+  
+  // Добавляем защиту на случай, если events_stats будет использоваться где-то еще
+  if (eventData && !eventData.events_stats) {
+      eventData.events_stats = [{ uniq_users_likes: Number(eventData.favorites_count) || 0 }];
+  }
+
+  return { data: eventData }
 })

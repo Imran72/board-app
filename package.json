@@ -4,13 +4,14 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --host",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
     "@nuxt/image": "^1.9.0",
+    "@nuxtjs/supabase": "^1.6.0",
     "@supabase/supabase-js": "^2.47.10",
     "colorthief": "^2.6.0",
     "date-fns": "^4.1.0",

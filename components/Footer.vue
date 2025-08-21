@@ -23,10 +23,12 @@ const goToRoute = (route: string) => {
 
 // Проверка: является ли текущая страница активной
 const isActive = (routePath: string) => {
+  // Корректируем старый путь на актуальный
+  if (route.path === '/myEvents' && routePath === '/favorites') return true;
 
-
-  if (route.path === '/my_events' && routePath == '/favorites') {
-    return true;
+  // Если открыта карточка события и пришли со вкладки "Избранное" — держим активной иконку избранного
+  if (route.path.startsWith('/event/') && route.query.from && String(route.query.from).startsWith('/favorites')) {
+    return routePath === '/favorites';
   }
 
   return route.path === routePath;
@@ -68,10 +70,10 @@ const isActive = (routePath: string) => {
   position: fixed;
   bottom: 0;
   width: 100%;
-  height: 11vh;
+  height: 10vh;
   background-color: transparent;
   z-index: 1000;
-
+  /* padding-top: 11vh; */
 }
 
 .footer-container {
@@ -82,7 +84,7 @@ const isActive = (routePath: string) => {
   height: 100%;
   flex-grow: 1;
   backdrop-filter: blur(5px);
-  background: rgba(0, 0, 0, 0.5); /* Полупрозрачный фон */
+  background: rgba(0, 0, 0, 0.35); /* Полупрозрачный фон */
   border: none; /* Убираем границу */
   box-shadow: none; /* Убираем тень */
   outline: none; /* Убираем обводку */
@@ -113,6 +115,4 @@ const isActive = (routePath: string) => {
   transition: transform 0.1s ease; /* Плавное восстановление */
 
 }
-
-
 </style>

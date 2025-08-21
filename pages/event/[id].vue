@@ -59,7 +59,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { ref, onMounted, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { useWebApp } from "vue-tg";
@@ -76,7 +75,7 @@ definePageMeta({
 interface Event {
   event_id: string;
   event_name: string;
-  event_host: string;
+  event_host: bigint;
   event_date: string;
   event_time: string;
   event_location: string;
@@ -84,6 +83,9 @@ interface Event {
   event_desc: string;
   favorites_count: string; 
   events_stats: { uniq_users_likes: number }[];
+  organizer?: {
+    user_name: string;
+  };
 }
 
 const route = useRoute();
@@ -119,23 +121,30 @@ const shareEvent = () => {
     // 3. Создаем URL для шаринга.
     const shareUrl = `https://t.me/share/url?text=${encodeURIComponent(text)}&url=${encodeURIComponent(appUrl)}`;
     
-    window.Telegram.WebApp.openTelegramLink(shareUrl);
-
+    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+        (window as any).Telegram.WebApp.openTelegramLink(shareUrl);
+    }
 };
-
-
-
-
 
 const checkIsFavorite = async (eventId: string) => {
     const userId = initDataUnsafe?.user?.id;
-    if (!userId) return;
+    console.log('checkIsFavorite вызван с:', { userId, eventId });
+    
+    if (!userId) {
+        console.log('User ID не найден, пропускаем проверку избранного');
+        return;
+    }
+    
     try {
         const result = await $fetch<{ isFavorite: boolean }>("/api/isFavorite", {
             method: "POST", body: { user_id: userId, event_id: eventId },
         });
+        console.log('API ответ isFavorite:', result);
         isSaved.value = result.isFavorite;
-    } catch (e) { console.error("Не удалось проверить статус 'избранного'", e); }
+        console.log('Состояние isSaved установлено в:', isSaved.value);
+    } catch (e) { 
+        console.error("Не удалось проверить статус 'избранного'", e); 
+    }
 };
 
 const toggleSave = () => {
@@ -159,12 +168,16 @@ const toggleSave = () => {
 };
 
 const fetchEvent = async (id: string) => {
+    console.log('fetchEvent вызван с id:', id);
+    
     if (!id || id === 'undefined') {
         loadingMessage.value = "Неверный ID мероприятия.";
         return;
     }
     const data = await loadCards(id);
     if (data) {
+        console.log('Данные события загружены:', data);
+        
         if (!data.events_stats) {
             data.events_stats = [{ uniq_users_likes: 0 }];
         }
@@ -176,7 +189,10 @@ const fetchEvent = async (id: string) => {
           gradientBackgroundColor.value = await gradientBackground();
         }
 
+        console.log('Перед вызовом checkIsFavorite');
         await checkIsFavorite(id);
+        console.log('После вызова checkIsFavorite, isSaved =', isSaved.value);
+        
         pendingAction.value = { eventId: null, action: null };
     } else {
         loadingMessage.value = "Не удалось загрузить мероприятие.";
@@ -184,6 +200,7 @@ const fetchEvent = async (id: string) => {
 };
 
 onMounted(() => {
+    console.log('onMounted вызван');
     fetchEvent(String(route.params.id));
 });
 
@@ -197,6 +214,7 @@ const capitalizeMonth = (dateStr: string) => {
     const shortWeekday = shortWeekdays[fullWeekday.toLowerCase()] || fullWeekday;
     return `${shortWeekday}, ${capitalizedMonth}`;
 };
+
 const loadCards = async (id: string) => {
     try {
         const response = await $fetch<{ data?: Event }>("/api/loadCardById", {

@@ -1,27 +1,62 @@
 // server/api/swap-event.ts
-import { createClient } from '@supabase/supabase-js'
+import supabase from '../utils/supabaseClient';
 
 export default defineEventHandler(async (event) => {
-    const config = useRuntimeConfig()
-    const supabase = createClient(config.supabaseUrl, config.supabaseKey)
+  const client = await supabase(event);
+  const { eventId1, eventId2 } = await readBody(event);
 
-    const body = await readBody(event)
-    const { user_id, event_id, direction } = body
+  if (!eventId1 || !eventId2) {
+    throw createError({
+      statusCode: 400,
+      message: 'eventId1 и eventId2 обязательны',
+    });
+  }
 
-    const user_event_id = `${user_id}_${event_id}_${Date.now()}`
+  try {
+    // Получаем оба события
+    const { data: event1, error: error1 } = await client
+      .from('events')
+      .select('*')
+      .eq('event_id', eventId1)
+      .single();
 
-    const { error } = await supabase.from('user_events').insert([{
-        user_event_id,
-        user_id,
-        event_id,
-        status: direction === 'right' ? 'liked' : 'disliked',
-        creation_dttm: new Date().toISOString(),
-    }])
+    const { data: event2, error: error2 } = await client
+      .from('events')
+      .select('*')
+      .eq('event_id', eventId2)
+      .single();
 
-    if (error) {
-        return { error: error.message }
+    if (error1 || error2) {
+      throw createError({
+        statusCode: 500,
+        message: 'Ошибка при получении событий',
+      });
     }
 
-    // Если нужно, можешь сразу вызывать RPC или считать избранное
-    return { success: true }
-})
+    // Меняем местами
+    const { error: updateError1 } = await client
+      .from('events')
+      .update({ event_id: eventId2 })
+      .eq('event_id', eventId1);
+
+    const { error: updateError2 } = await client
+      .from('events')
+      .update({ event_id: eventId1 })
+      .eq('event_id', eventId2);
+
+    if (updateError1 || updateError2) {
+      throw createError({
+        statusCode: 500,
+        message: 'Ошибка при обмене событий',
+      });
+    }
+
+    return { success: true };
+  } catch (e: any) {
+    console.error('Исключение при обмене событий:', e);
+    throw createError({
+      statusCode: 500,
+      message: `Ошибка сервера: ${e.message}`,
+    });
+  }
+});

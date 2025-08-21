@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
 // 1. Импортируем onActivated
-import { onMounted, onActivated, ref } from "vue";
+import { onMounted, onActivated, ref, watchEffect } from "vue";
 import { useWebApp } from "vue-tg";
-import styles from './assets/favorites.module.css';
+import styles from '~/assets/favorites.module.css';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
@@ -20,11 +20,15 @@ interface Event {
   event_time: string;
   event_location: string;
   favorites_count: string;
+  organizer?: {
+    user_name: string;
+  };
 }
 
 const favorite_events = ref<Event[]>([]);
 const router = useRouter();
 const route = useRoute();
+const { initDataUnsafe } = useWebApp();
 
 const goToEvent = (id: string) => {
   router.push({
@@ -56,21 +60,29 @@ const loadFavorites = async (userId) => {
   }
 };
 
+const isUserInitialized = useState('isUserInitialized');
+
 // 2. Создаем единую функцию для загрузки данных
 const loadData = () => {
-    const { initDataUnsafe } = useWebApp();
-    const userId = initDataUnsafe?.user?.id;
-
-    if (userId) {
-        loadFavorites(userId);
-    }
+  const userId = initDataUnsafe?.user?.id;
+  if (!userId) {
+    console.error('Не найден user_id. Убедитесь, что приложение запущено внутри Telegram.');
+    return;
+  }
+  loadFavorites(userId);
 }
 
+watchEffect(() => {
+  if (isUserInitialized.value) {
+    loadData();
+  }
+});
+
 // 3. Вызываем загрузку данных при первой загрузке
-onMounted(loadData);
+// onMounted(loadData);
 
 // 4. Вызываем загрузку данных при каждом возвращении на страницу
-onActivated(loadData);
+// onActivated(loadData);
 
 
 const shortWeekdays = {
@@ -93,6 +105,16 @@ const capitalizeMonth = (dateStr: string) => {
   const shortWeekday = shortWeekdays[fullWeekday.toLowerCase()] || fullWeekday;
   return `${shortWeekday}, ${capitalizedMonth}`;
 };
+
+// Функция для получения никнейма организатора
+const getOrganizerName = (event: Event) => {
+  if (event.organizer && event.organizer.user_name) {
+    return event.organizer.user_name;
+  }
+  
+  // Fallback на ID если данных об организаторе нет
+  return `@${event.event_host}`;
+};
 </script>
 
 <template>
@@ -101,8 +123,8 @@ const capitalizeMonth = (dateStr: string) => {
       <div
           v-if="favorite_events.length > 0"
           :class="styles.event_card"
-          v-for="(event, index) in favorite_events"
-          :key="index"
+          v-for="event in favorite_events"
+          :key="event.event_id"
           @click="goToEvent(event.event_id)">
 
         <div :class="styles.event_image">
@@ -111,7 +133,7 @@ const capitalizeMonth = (dateStr: string) => {
 
         <div :class="styles.event_details">
           <h3 :class="styles.event_name">{{event.event_name}}</h3>
-          <p :class="styles.event_host">@{{event.event_host}}</p>
+          <p :class="styles.event_host">{{ getOrganizerName(event) }}</p>
           <div :class="styles.event_meta">
             <div :class="styles.event_date">
               <span :class="styles.icon"><img src="/icons/Date.svg" /></span>

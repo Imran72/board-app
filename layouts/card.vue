@@ -10,23 +10,11 @@ import { usePendingFavorite } from '~/composables/usePendingFavorite';
 import { useWebApp } from "vue-tg";
 import { useRouter } from 'vue-router'; 
 
-interface TelegramWebApp {
-  WebApp: {
-    BackButton: {
-      show: () => void;
-      hide: () => void;
-      onClick: (callback: () => void) => void;
-      offClick: (callback: () => void) => void;
-    };
-    close: () => void;
-  };
-}
-
 const router = useRouter(); 
 const pendingAction = usePendingFavorite();
 const { initDataUnsafe } = useWebApp();
 
-const handleBackClick = async () => {
+const flushPendingFavorite = async () => {
   if (pendingAction.value && pendingAction.value.eventId && pendingAction.value.action) {
     const userId = initDataUnsafe?.user?.id;
     if (userId) {
@@ -35,16 +23,18 @@ const handleBackClick = async () => {
         event_id: pendingAction.value.eventId,
         action: pendingAction.value.action,
       };
-      
-      $fetch('/api/toggleFavorite', {
-        method: 'POST',
-        body: payload
-      }).catch(err => {
-        console.error("Ошибка отложенного сохранения:", err.data || err);
-      });
+      try {
+        await $fetch('/api/toggleFavorite', { method: 'POST', body: payload });
+      } catch (err: any) {
+        console.error("Ошибка отложенного сохранения:", err?.data || err);
+      }
     }
     pendingAction.value = { eventId: null, action: null };
   }
+};
+
+const handleBackClick = async () => {
+  await flushPendingFavorite();
 
   // Проверяем, есть ли куда возвращаться в истории
   if (window.history.state.back) {
@@ -69,7 +59,12 @@ onUnmounted(() => {
     tg.BackButton.offClick(handleBackClick);
     tg.BackButton.hide();
   }
+  // На случай размонтирования без BackButton — пытаемся сбросить отложенное избранное
+  flushPendingFavorite();
 });
+
+// Примечание: onBeforeRouteLeave в layout может выдавать предупреждение, 
+// поэтому полагаемся на BackButton и onUnmounted
 </script>
 
 <style scoped></style>

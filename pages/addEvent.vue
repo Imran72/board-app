@@ -16,7 +16,7 @@ interface UploadImageResponse {
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useWebApp } from "vue-tg";
 import { useRouter } from 'vue-router';
-import styles from "./assets/event_create.module.css";
+import styles from "../assets/event_create.module.css";
 
 const router = useRouter();
 
@@ -64,8 +64,8 @@ const saveDescription = () => {
   closeDescModal();
 };
 
-const uploadImage = async (event) => {
-  const file = event.target.files[0];
+const uploadImage = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
 
   const formData = new FormData()
@@ -90,7 +90,7 @@ const uploadImage = async (event) => {
   }
 };
 
-const eventBanner = ref(null);
+const eventBanner = ref<string | null>(null);
 const eventName = ref("");
 const eventPrice = ref("");
 const eventApproval = ref(false);
@@ -105,7 +105,7 @@ const closeKeyboard = (event: Event) => {
   const target = event.target as HTMLElement;
   if (target.closest("select")) return;
   if (target && !target.closest("input, textarea")) {
-    document.activeElement?.blur();
+    (document.activeElement as HTMLElement)?.blur();
   }
 };
 
@@ -176,11 +176,9 @@ const createEvent = async () => {
       console.error('Ошибка:', response.error);
       triggerNotification(response.error);
     } else {
-      // console.log('Успешное добавление события');
-
       router.push({ path: '/myEvents', query: { created: true } });
     }
-  } catch (error) {
+  } catch (error: any) {
     if (error.response && error.response._data && error.response._data.error) {
       triggerNotification(error.response._data.error);
     } else {
@@ -189,20 +187,6 @@ const createEvent = async () => {
     console.error('Ошибка при создании события:', error);
   }
 };
-
-
-const resetForm = () => {
-  eventName.value = "";
-  eventStart.value = getNearestHourMoscow();
-  eventEnd.value = getNearestHourMoscow();
-  eventLocation.value = "";
-  eventDesc.value = "";
-  eventTags.value = "";
-  eventLinks.value = "";
-  eventBanner.value = null;
-};
-
-
 </script>
 
 <template>
@@ -211,17 +195,16 @@ const resetForm = () => {
       {{ notificationMessage }}
     </div>
 
+    <!-- Возвращенная структура без "липкого" хедера -->
     <div :class="styles.pageTitle">Создать событие</div>
-
     <div :class="styles.imageUpload">
       <div :class="styles.imagePlaceholder">
         <img v-if="eventBanner" :src="eventBanner" alt="Event Image" :class="styles.thumbnail" />
-
-        <label :class="styles.uploadIcon">
+        <!-- ✅ ИЗМЕНЕНИЕ: Добавлен инлайновый стиль для исправления позиционирования -->
+        <label :class="styles.uploadIcon" style="position: relative;">
           <img src="/icons/add_photo_ae.svg" alt="Upload Image" />
           <input type="file" ref="fileInput" :class="styles.hidden_input" @change="uploadImage" accept="image/*" />
         </label>
-
       </div>
     </div>
 
@@ -235,9 +218,7 @@ const resetForm = () => {
         <div :class="styles.inputFieldHalf2">Начало</div>
         <input type="datetime-local" :class="styles.inputFieldDatePicker" v-model="eventStart" />
       </div>
-
       <div :class="styles.divider"></div>
-
       <div :class="styles.inputContainer">
         <img src="/icons/end_ae.svg" :class="styles.icon" alt="Конец" />
         <div :class="styles.inputFieldHalf2">Конец</div>
@@ -306,13 +287,11 @@ const resetForm = () => {
       <div :class="styles.inputContainer">
         <img src="/icons/approval_ae.svg" :class="styles.icon" alt="Требуется одобрение" />
         <input type="text" :class="styles.inputFieldHalf" placeholder="Требуется одобрение" readonly />
-
         <label :class="styles.switch">
           <input type="checkbox" v-model="eventApproval" />
           <span :class="styles.slider"></span>
         </label>
       </div>
-
       <div :class="styles.divider"></div>
       <div :class="styles.inputContainer">
         <img src="/icons/price_ae.svg" :class="styles.icon" alt="Цена" />
@@ -333,14 +312,12 @@ const resetForm = () => {
       <div :class="styles.inputContainer">
         <img src="/icons/visibility_ae.svg" :class="styles.icon" alt="Видимость" />
         <input type="text" :class="styles.inputFieldHalf" placeholder="Видимость" readonly />
-
         <select v-model="eventVisibility" id="eventVisibility">
           <option value="Публичное">Публичное</option>
           <option value="Частное">Частное</option>
         </select>
         <img src="/icons/up_down.svg" :class="styles.icon" alt="Видимость" />
       </div>
-
       <div :class="styles.divider"></div>
       <div :class="styles.inputContainer">
         <img src="/icons/capacity_ae.svg" :class="styles.icon" alt="Вместимость" />
@@ -368,7 +345,6 @@ const resetForm = () => {
   left: 50%;
   transform: translateX(-50%);
   background-color: #ff4d4d;
-  /* Красный цвет для ошибки */
   color: white;
   padding: 10px 20px;
   border-radius: 8px;
@@ -376,4 +352,6 @@ const resetForm = () => {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: opacity 0.5s, top 0.5s;
 }
+
+/* Удалены стили для .sticky-header и .scrollable-content */
 </style>

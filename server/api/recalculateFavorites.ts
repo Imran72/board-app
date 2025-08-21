@@ -1,38 +1,51 @@
 // /server/api/recalculateFavorites.ts
-import { createClient } from '@supabase/supabase-js'
+import supabase from '../utils/supabaseClient';
 
 export default defineEventHandler(async (event) => {
-    const config = useRuntimeConfig()
-    const supabase = createClient(config.supabaseUrl, config.supabaseKey)
-    
-    const { event_id } = await readBody(event);
+  const client = await supabase(event);
 
-    if (!event_id) {
-        setResponseStatus(event, 400)
-        return { error: 'Необходим event_id для пересчета' }
+  try {
+    // Получаем все события
+    const { data: events, error: eventsError } = await client
+      .from('events')
+      .select('event_id');
+
+    if (eventsError) {
+      throw createError({
+        statusCode: 500,
+        message: `Ошибка при получении событий: ${eventsError.message}`,
+      });
     }
 
-    // 1. Считаем, сколько всего записей в user_favorites для этого события
-    const { count, error: countError } = await supabase
+    // Для каждого события пересчитываем количество избранного
+    for (const event of events || []) {
+      const { count, error: countError } = await client
         .from('user_favorites')
         .select('*', { count: 'exact', head: true })
-        .eq('event_id', event_id);
+        .eq('event_id', event.event_id);
 
-    if (countError) {
-        setResponseStatus(event, 500);
-        return { error: `Ошибка подсчета: ${countError.message}` };
-    }
+      if (countError) {
+        console.warn(`Ошибка при подсчете для события ${event.event_id}:`, countError);
+        continue;
+      }
 
-    // 2. Обновляем поле favorites_count в таблице events
-    const { error: updateError } = await supabase
+      // Обновляем счетчик
+      const { error: updateError } = await client
         .from('events')
-        .update({ favorites_count: String(count || 0) }) // Обновляем на новое значение
-        .eq('event_id', event_id);
+        .update({ favorites_count: count || 0 })
+        .eq('event_id', event.event_id);
 
-    if (updateError) {
-        setResponseStatus(event, 500);
-        return { error: `Ошибка обновления счетчика: ${updateError.message}` };
+      if (updateError) {
+        console.warn(`Ошибка при обновлении счетчика для события ${event.event_id}:`, updateError);
+      }
     }
 
-    return { success: true, new_count: count };
-})
+    return { success: true, message: 'Счетчики избранного пересчитаны' };
+  } catch (e: any) {
+    console.error('Исключение при пересчете избранного:', e);
+    throw createError({
+      statusCode: 500,
+      message: `Ошибка сервера: ${e.message}`,
+    });
+  }
+});
