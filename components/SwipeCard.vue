@@ -12,7 +12,7 @@
       <div class="card-info">
         <div class="event-name">{{ currentCard.event_name }}</div>
 
-        <div v-if="currentCard && Number(currentCard.favorites_count) > 0" class="likes-container">
+        <div class="likes-container">
           <div class="event-likes">{{ formattedLikes }} сохранили</div>
         </div>
 
