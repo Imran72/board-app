@@ -13,14 +13,18 @@ const isLoading = ref(false);
 const handleEventsFound = (data: { events: any[], dates: string[], count: number, showAll: boolean }) => {
   console.log('События найдены:', data);
   if (data.showAll) {
-    // Если показать все события, очищаем фильтр
-    filteredEvents.value = [];
+    // Если показать все события, очищаем фильтр и показываем все
+    console.log('index.vue: Очищаем фильтр, показываем все события');
+    filteredEvents.value = undefined; // Используем undefined вместо пустого массива
     showNoEventsMessage.value = false;
+    // Здесь нужно загрузить все события из SwipeCard
   } else {
     // Если есть отфильтрованные события
+    console.log('index.vue: Устанавливаем отфильтрованные события:', data.events);
     filteredEvents.value = data.events;
     showNoEventsMessage.value = false;
   }
+  console.log('index.vue: filteredEvents после обновления:', filteredEvents.value);
   isLoading.value = false;
 };
 
@@ -56,7 +60,7 @@ const handleSearchError = (data: { error: any, dates: string[], message: string 
     
     <!-- Компонент с карточками событий -->
     <CustomSwipe 
-      v-if="!showNoEventsMessage || filteredEvents.length > 0" 
+      v-if="!showNoEventsMessage" 
       :filtered-events="filteredEvents"
     />
   </section>

@@ -51,6 +51,7 @@ import { ru } from 'date-fns/locale';
 import { useCardBackground } from '~/composables/useCardBackground';
 import { useRouter, useRoute } from 'vue-router';
 import { format, parse } from 'date-fns';
+import { useTelegramInit } from '~/composables/useTelegramInit';
 
 // Пропсы для получения отфильтрованных событий
 const props = defineProps<{
@@ -134,12 +135,13 @@ const swipeCard = async (direction: 'left' | 'right') => {
   if (!currentCard.value) return;
 
   try {
-    const { initDataUnsafe } = useWebApp();
-    const user_id = initDataUnsafe?.user?.id;
-    // if (!user_id) {
-    //   console.error('Ошибка: нет user_id');
-    //   return;
-    // }
+    const { userData } = useTelegramInit();
+    const user_id = userData.value?.id;
+    
+    if (!user_id) {
+      console.error('Ошибка: нет user_id, Telegram Web App не готов');
+      return;
+    }
 
     // Сохраняем "лайк" только при свайпе вправо
     if (direction === 'right') {
@@ -237,11 +239,27 @@ const route = useRoute();
 
 // Следим за изменением отфильтрованных событий
 watch(() => props.filteredEvents, (newEvents) => {
-  if (newEvents && newEvents.length > 0) {
-    // Если есть отфильтрованные события, инициализируем карточки
-    initCardsFromFiltered(newEvents);
-  } else if (newEvents && newEvents.length === 0) {
-    // Если событий нет, очищаем текущие карточки
+  try {
+    console.log('SwipeCard: filteredEvents изменился:', newEvents);
+    
+    if (newEvents && newEvents.length > 0) {
+      // Если есть отфильтрованные события, инициализируем карточки
+      console.log('SwipeCard: Инициализируем отфильтрованные события');
+      initCardsFromFiltered(newEvents);
+    } else if (newEvents && newEvents.length === 0) {
+      // Если событий нет, очищаем текущие карточки
+      console.log('SwipeCard: Очищаем карточки (нет событий)');
+      currentCard.value = null;
+      nextCard.value = null;
+      previousCard.value = null;
+    } else if (!newEvents || newEvents.length === 0) {
+      // Если filteredEvents пустой или undefined, загружаем все события
+      console.log('SwipeCard: Загружаем все события (нет фильтра)');
+      initCards(null); // Загружаем все события
+    }
+  } catch (error) {
+    console.error('SwipeCard: Ошибка в watch функции:', error);
+    // В случае ошибки очищаем карточки
     currentCard.value = null;
     nextCard.value = null;
     previousCard.value = null;
@@ -250,32 +268,62 @@ watch(() => props.filteredEvents, (newEvents) => {
 
 // Функция для инициализации карточек из отфильтрованных событий
 const initCardsFromFiltered = (events: any[]) => {
-  if (events.length === 0) return;
-  
-  // Устанавливаем первую карточку
-  currentCard.value = events[0];
-  
-  // Устанавливаем следующую карточку, если есть
-  if (events.length > 1) {
-    nextCard.value = events[1];
-  } else {
+  try {
+    console.log('initCardsFromFiltered: Начинаем инициализацию с событиями:', events);
+    
+    if (!events || events.length === 0) {
+      console.log('initCardsFromFiltered: Нет событий для инициализации');
+      return;
+    }
+    
+    // Проверяем, что события имеют необходимые поля
+    if (!events[0] || !events[0].event_id) {
+      console.error('initCardsFromFiltered: Первое событие не имеет event_id:', events[0]);
+      return;
+    }
+    
+    // Устанавливаем первую карточку
+    currentCard.value = events[0];
+    console.log('initCardsFromFiltered: Установлена первая карточка:', currentCard.value.event_name);
+    
+    // Устанавливаем следующую карточку, если есть
+    if (events.length > 1) {
+      nextCard.value = events[1];
+      console.log('initCardsFromFiltered: Установлена следующая карточка:', nextCard.value.event_name);
+    } else {
+      nextCard.value = null;
+      console.log('initCardsFromFiltered: Следующая карточка не установлена');
+    }
+    
+    // Предыдущей карточки нет при инициализации
+    previousCard.value = null;
+    
+    // Обновляем фон для текущей карточки
+    if (currentCard.value && currentCard.value.event_banner) {
+      updateCardBackground();
+    }
+    
+    console.log('initCardsFromFiltered: Инициализация завершена успешно');
+  } catch (error) {
+    console.error('initCardsFromFiltered: Ошибка при инициализации:', error);
+    // В случае ошибки очищаем карточки
+    currentCard.value = null;
     nextCard.value = null;
-  }
-  
-  // Предыдущей карточки нет при инициализации
-  previousCard.value = null;
-  
-  // Обновляем фон для текущей карточки
-  if (currentCard.value && currentCard.value.event_banner) {
-    updateCardBackground();
+    previousCard.value = null;
   }
 };
 
 // Функция для обновления фона карточки
 const updateCardBackground = async () => {
-  if (currentCard.value && currentCard.value.event_banner) {
-    dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
-    gradientBackgroundColor.value = await gradientBackground();
+  try {
+    if (currentCard.value && currentCard.value.event_banner) {
+      console.log('updateCardBackground: Обновляем фон для баннера:', currentCard.value.event_banner);
+      dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
+      gradientBackgroundColor.value = await gradientBackground();
+      console.log('updateCardBackground: Фон обновлен успешно');
+    }
+  } catch (error) {
+    console.error('updateCardBackground: Ошибка при обновлении фона:', error);
   }
 };
 

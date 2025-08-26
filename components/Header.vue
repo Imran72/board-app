@@ -95,8 +95,8 @@ const fetchEventsByDates = async () => {
       .map(date => date.iso);
     
     if (selectedDates.value.length === 0) {
-      // Если даты не выбраны, загружаем все события
-      console.log('Загружаем все события...');
+      // Если даты не выбраны, просто уведомляем что нужно показать все события
+      console.log('Даты не выбраны - показываем все события');
       emit('events-found', {
         events: [],
         dates: [],
@@ -124,7 +124,7 @@ const fetchEventsByDates = async () => {
       // Если событий нет, показываем сообщение
       console.log('В выбранные даты событий нет');
       emit('no-events-found', {
-        message: `В выбранные даты (${selectedDates.value.join(', ')}) мероприятий нет :(`,
+        message: `В выбранные даты мероприятий нет :(`,
         dates: selectedDates.value
       });
     } else {
