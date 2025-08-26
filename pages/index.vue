@@ -15,9 +15,9 @@ const handleEventsFound = (data: { events: any[], dates: string[], count: number
   if (data.showAll) {
     // Если показать все события, очищаем фильтр и показываем все
     console.log('index.vue: Очищаем фильтр, показываем все события');
-    filteredEvents.value = undefined; // Используем undefined вместо пустого массива
+    filteredEvents.value = undefined; // Используем undefined для обозначения "показать все"
     showNoEventsMessage.value = false;
-    // Здесь нужно загрузить все события из SwipeCard
+    // SwipeCard автоматически загрузит все события
   } else {
     // Если есть отфильтрованные события
     console.log('index.vue: Устанавливаем отфильтрованные события:', data.events);

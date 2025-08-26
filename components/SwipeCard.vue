@@ -167,14 +167,20 @@ const swipeCard = async (direction: 'left' | 'right') => {
 
   // Если есть отфильтрованные события, работаем с ними
   if (props.filteredEvents && props.filteredEvents.length > 0) {
+    console.log('swipeCard: Работаем с отфильтрованными событиями');
     const currentIndex = props.filteredEvents.findIndex(event => event.event_id === currentCard.value?.event_id);
+    console.log('swipeCard: Текущий индекс в отфильтрованных событиях:', currentIndex);
+    
     if (currentIndex !== -1 && currentIndex < props.filteredEvents.length - 1) {
       nextCard.value = props.filteredEvents[currentIndex + 1];
+      console.log('swipeCard: Установлена следующая карточка из фильтра:', nextCard.value.event_name);
     } else {
       nextCard.value = null;
+      console.log('swipeCard: Следующая карточка не найдена в фильтре');
     }
   } else {
     // Если нет отфильтрованных событий, используем стандартную логику
+    console.log('swipeCard: Используем стандартную логику загрузки');
     if (currentCard.value) {
       nextCard.value = await loadCard(currentCard.value.event_id, 'next');
     }
@@ -237,6 +243,94 @@ const endDrag = () => {
 
 const route = useRoute();
 
+// Функция для обновления фона карточки (определяем раньше)
+const updateCardBackground = async () => {
+  try {
+    if (currentCard.value && currentCard.value.event_banner) {
+      console.log('updateCardBackground: Обновляем фон для баннера:', currentCard.value.event_banner);
+      dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
+      gradientBackgroundColor.value = await gradientBackground();
+      console.log('updateCardBackground: Фон обновлен успешно');
+    }
+  } catch (error) {
+    console.error('updateCardBackground: Ошибка при обновлении фона:', error);
+  }
+};
+
+// Функции для обработки событий в watch
+const handleFilteredEvents = (events: any[]) => {
+  try {
+    console.log('handleFilteredEvents: Обрабатываем отфильтрованные события:', events);
+    
+    if (!events || events.length === 0) {
+      console.log('handleFilteredEvents: Нет событий для обработки');
+      return;
+    }
+    
+    // Проверяем, что события имеют необходимые поля
+    if (!events[0] || !events[0].event_id) {
+      console.error('handleFilteredEvents: Первое событие не имеет event_id:', events[0]);
+      return;
+    }
+    
+    // Устанавливаем первую карточку
+    currentCard.value = events[0];
+    console.log('handleFilteredEvents: Установлена первая карточка:', currentCard.value.event_name, 'с датой:', currentCard.value.event_date);
+    
+    // Устанавливаем следующую карточку, если есть
+    if (events.length > 1) {
+      nextCard.value = events[1];
+      console.log('handleFilteredEvents: Установлена следующая карточка:', nextCard.value.event_name, 'с датой:', nextCard.value.event_date);
+    } else {
+      nextCard.value = null;
+      console.log('handleFilteredEvents: Следующая карточка не установлена');
+    }
+    
+    // Предыдущей карточки нет при инициализации
+    previousCard.value = null;
+    
+    // Обновляем фон для текущей карточки
+    if (currentCard.value && currentCard.value.event_banner) {
+      updateCardBackground();
+    }
+    
+    console.log('handleFilteredEvents: Обработка завершена успешно');
+  } catch (error) {
+    console.error('handleFilteredEvents: Ошибка при обработке:', error);
+    // В случае ошибки очищаем карточки
+    currentCard.value = null;
+    nextCard.value = null;
+    previousCard.value = null;
+  }
+};
+
+const handleLoadAllEvents = async () => {
+  try {
+    console.log('handleLoadAllEvents: Загружаем все события');
+    
+    // Очищаем текущие карточки
+    currentCard.value = null;
+    nextCard.value = null;
+    previousCard.value = null;
+    
+    // Загружаем события через стандартный API
+    await initCards(null);
+    
+    if (currentCard.value && currentCard.value.event_banner) {
+      dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
+      gradientBackgroundColor.value = await gradientBackground();
+    }
+    
+    console.log('handleLoadAllEvents: Загрузка завершена');
+  } catch (error) {
+    console.error('handleLoadAllEvents: Ошибка при загрузке всех событий:', error);
+    // В случае ошибки очищаем карточки
+    currentCard.value = null;
+    nextCard.value = null;
+    previousCard.value = null;
+  }
+};
+
 // Следим за изменением отфильтрованных событий
 watch(() => props.filteredEvents, (newEvents) => {
   try {
@@ -245,17 +339,23 @@ watch(() => props.filteredEvents, (newEvents) => {
     if (newEvents && newEvents.length > 0) {
       // Если есть отфильтрованные события, инициализируем карточки
       console.log('SwipeCard: Инициализируем отфильтрованные события');
-      initCardsFromFiltered(newEvents);
+      handleFilteredEvents(newEvents);
     } else if (newEvents && newEvents.length === 0) {
       // Если событий нет, очищаем текущие карточки
       console.log('SwipeCard: Очищаем карточки (нет событий)');
       currentCard.value = null;
       nextCard.value = null;
       previousCard.value = null;
-    } else if (!newEvents || newEvents.length === 0) {
-      // Если filteredEvents пустой или undefined, загружаем все события
+    } else if (!newEvents || newEvents === undefined) {
+      // Если filteredEvents undefined, загружаем все события
       console.log('SwipeCard: Загружаем все события (нет фильтра)');
-      initCards(null); // Загружаем все события
+      handleLoadAllEvents();
+    } else if (newEvents && newEvents.length === 0) {
+      // Если filteredEvents пустой массив, очищаем карточки
+      console.log('SwipeCard: Очищаем карточки (пустой массив)');
+      currentCard.value = null;
+      nextCard.value = null;
+      previousCard.value = null;
     }
   } catch (error) {
     console.error('SwipeCard: Ошибка в watch функции:', error);
@@ -270,6 +370,11 @@ watch(() => props.filteredEvents, (newEvents) => {
 const initCardsFromFiltered = (events: any[]) => {
   try {
     console.log('initCardsFromFiltered: Начинаем инициализацию с событиями:', events);
+    console.log('initCardsFromFiltered: Детали событий:', events.map(e => ({
+      id: e.event_id,
+      name: e.event_name,
+      date: e.event_date
+    })));
     
     if (!events || events.length === 0) {
       console.log('initCardsFromFiltered: Нет событий для инициализации');
@@ -284,12 +389,12 @@ const initCardsFromFiltered = (events: any[]) => {
     
     // Устанавливаем первую карточку
     currentCard.value = events[0];
-    console.log('initCardsFromFiltered: Установлена первая карточка:', currentCard.value.event_name);
+    console.log('initCardsFromFiltered: Установлена первая карточка:', currentCard.value.event_name, 'с датой:', currentCard.value.event_date);
     
     // Устанавливаем следующую карточку, если есть
     if (events.length > 1) {
       nextCard.value = events[1];
-      console.log('initCardsFromFiltered: Установлена следующая карточка:', nextCard.value.event_name);
+      console.log('initCardsFromFiltered: Установлена следующая карточка:', nextCard.value.event_name, 'с датой:', nextCard.value.event_date);
     } else {
       nextCard.value = null;
       console.log('initCardsFromFiltered: Следующая карточка не установлена');
@@ -313,22 +418,17 @@ const initCardsFromFiltered = (events: any[]) => {
   }
 };
 
-// Функция для обновления фона карточки
-const updateCardBackground = async () => {
-  try {
-    if (currentCard.value && currentCard.value.event_banner) {
-      console.log('updateCardBackground: Обновляем фон для баннера:', currentCard.value.event_banner);
-      dominantColor.value = await getAverageColor(currentCard.value.event_banner) as { r: number, g: number, b: number };
-      gradientBackgroundColor.value = await gradientBackground();
-      console.log('updateCardBackground: Фон обновлен успешно');
-    }
-  } catch (error) {
-    console.error('updateCardBackground: Ошибка при обновлении фона:', error);
-  }
-};
+
 
 onMounted(async () => {
   document.body.style.overflow = 'hidden';
+  
+  // Проверяем, есть ли отфильтрованные события
+  if (props.filteredEvents && props.filteredEvents.length > 0) {
+    console.log('onMounted: Есть отфильтрованные события, пропускаем initCards');
+    return;
+  }
+  
   const initialEventId = (route.query.scrollTo as string) || localStorage.getItem('last_event_id');
   await initCards(initialEventId);
 
