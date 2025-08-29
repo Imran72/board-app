@@ -5,8 +5,8 @@
       <img :src="currentCard.event_banner" alt="Event Banner" class="card-image" />
 
       <div class="organizer-tag">
-        <img src="/icons/user_icon.svg" alt="Organizer" class="organizer-icon" />
-        <span>{{ currentCard.event_host }}</span>
+        <img src="/icons/Frame.svg" alt="Organizer" class="organizer-icon" />
+        <span class="organizer-name">{{ currentCard.event_host }}</span>
       </div>
 
       <div class="card-info">
@@ -28,7 +28,7 @@
           <button class="button-new secondary" @click.stop="swipeCard('left')">
             Скип
           </button>
-          <button class="button-new secondary" @click.stop="backEvent()"> <img src="/icons/back_button.svg" alt="Назад"
+          <button class="button-new secondary" @click.stop="backEvent()"> <img src="public/icons/back_button.svg" alt="Назад"
               class="button-icon" />
           </button>
           <button class="button-new secondary" @click.stop="swipeCard('right')">
@@ -95,6 +95,9 @@ const {
   gradientBackground
 } = useCardBackground();
 
+// Получаем данные пользователя Telegram
+const { userData } = useTelegramInit();
+
 const formattedLikes = computed(() => {
   const likes = Number(currentCard.value?.favorites_count) || 0;
   return likes.toLocaleString('ru-RU');
@@ -112,22 +115,63 @@ const mergedStyle = computed(() => ({
 
 const loadCard = async (eventId: string | null, direction: 'next' | 'prev' | 'current') => {
   try {
+    console.log(`loadCard: Загружаем карточку direction=${direction}, eventId=${eventId}`);
     const result = await $fetch<Event | null>('/api/loadCard', {
       method: 'POST',
       body: { eventId, direction }
     });
+    
+    if (result && 'error' in result) {
+      console.error(`loadCard: API вернул ошибку (${direction}):`, result.error);
+      return null;
+    }
+    
+    console.log(`loadCard: Успешно загружена карточка direction=${direction}:`, result?.event_name);
     return result;
   } catch (err) {
-    console.error(`Ошибка загрузки (${direction}):`, err);
+    console.error(`loadCard: Ошибка загрузки (${direction}):`, err);
     return null;
   }
 };
 
 const initCards = async (event_id: string | null) => {
-  previousCard.value = null;
-  currentCard.value = await loadCard(event_id, event_id ? 'current' : 'next');
-  if (currentCard.value) {
-    nextCard.value = await loadCard(currentCard.value.event_id, 'next');
+  try {
+    // Если передан конкретный event_id, загружаем его
+    if (event_id) {
+      currentCard.value = await loadCard(event_id, 'current');
+      if (currentCard.value) {
+        nextCard.value = await loadCard(currentCard.value.event_id, 'next');
+        // Сохраняем текущую карточку в localStorage
+        localStorage.setItem('last_event_id', currentCard.value.event_id);
+        console.log('initCards: Загружена карточка по ID:', event_id);
+      }
+    } else {
+      // Если event_id не передан, пытаемся восстановить из localStorage
+      const lastEventId = localStorage.getItem('last_event_id');
+      if (lastEventId) {
+        console.log('initCards: Восстанавливаем последнюю карточку из localStorage:', lastEventId);
+        currentCard.value = await loadCard(lastEventId, 'current');
+        if (currentCard.value) {
+          nextCard.value = await loadCard(currentCard.value.event_id, 'next');
+        }
+      } else {
+        // Если нет сохраненной карточки, загружаем следующую
+        console.log('initCards: Загружаем следующую карточку');
+        currentCard.value = await loadCard(null, 'next');
+        if (currentCard.value) {
+          nextCard.value = await loadCard(currentCard.value.event_id, 'next');
+          localStorage.setItem('last_event_id', currentCard.value.event_id);
+        }
+      }
+    }
+    
+    previousCard.value = null;
+  } catch (error) {
+    console.error('initCards: Ошибка при инициализации карточек:', error);
+    // В случае ошибки очищаем карточки
+    currentCard.value = null;
+    nextCard.value = null;
+    previousCard.value = null;
   }
 };
 
@@ -135,7 +179,6 @@ const swipeCard = async (direction: 'left' | 'right') => {
   if (!currentCard.value) return;
 
   try {
-    const { userData } = useTelegramInit();
     const user_id = userData.value?.id;
     
     if (!user_id) {
@@ -155,9 +198,11 @@ const swipeCard = async (direction: 'left' | 'right') => {
       });
     }
 
-    if (nextCard.value) {
-      localStorage.setItem('last_event_id', nextCard.value.event_id);
-    }
+      // Сохраняем ID следующей карточки в localStorage
+  if (nextCard.value) {
+    localStorage.setItem('last_event_id', nextCard.value.event_id);
+    console.log('swipeCard: Сохранена следующая карточка в localStorage:', nextCard.value.event_id);
+  }
   } catch (err) {
     console.error('Ошибка при свайпе:', err);
   }
@@ -203,6 +248,10 @@ const backEvent = async () => {
   currentCard.value = previousCard.value;
 
   if (currentCard.value) {
+    // Сохраняем текущую карточку в localStorage
+    localStorage.setItem('last_event_id', currentCard.value.event_id);
+    console.log('backEvent: Сохранена текущая карточка в localStorage:', currentCard.value.event_id);
+    
     // Загружаем новую "предыдущую" карточку
     previousCard.value = await loadCard(currentCard.value.event_id, 'prev');
 
@@ -276,6 +325,10 @@ const handleFilteredEvents = (events: any[]) => {
     // Устанавливаем первую карточку
     currentCard.value = events[0];
     console.log('handleFilteredEvents: Установлена первая карточка:', currentCard.value.event_name, 'с датой:', currentCard.value.event_date);
+    
+    // Сохраняем текущую карточку в localStorage
+    localStorage.setItem('last_event_id', currentCard.value.event_id);
+    console.log('handleFilteredEvents: Сохранена карточка в localStorage:', currentCard.value.event_id);
     
     // Устанавливаем следующую карточку, если есть
     if (events.length > 1) {
@@ -447,6 +500,7 @@ onMounted(async () => {
 const router = useRouter();
 const goToEvent = (id: string) => {
   if (!id) return;
+  console.log('SwipeCard: Переходим к событию:', id);
   router.push(`/event/${id}`);
 };
 
@@ -465,4 +519,6 @@ const goToEvent = (id: string) => {
   background-color: #B3F93F; Яркий акцентный цвет
   color: #1a1a1a; Темный текст для контраста
 } */
+
+
 </style>

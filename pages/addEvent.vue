@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'header',
+  layout: 'card',
 });
 
 interface Response {
@@ -98,6 +98,11 @@ const eventLinks = ref("");
 const eventTags = ref("");
 const eventPriceStatus = ref("Бесплатно");
 const eventVisibility = ref("Публичное");
+
+// Состояние для режима редактирования
+const isEditing = ref(false);
+const originalEventId = ref('');
+const isSubmitting = ref(false);
 const eventCapacity = ref("Limited");
 
 
@@ -113,6 +118,46 @@ onMounted(() => {
   document.addEventListener("click", closeKeyboard);
   eventStart.value = getNearestHourMoscow();
   eventEnd.value = getNearestHourMoscow();
+  
+  // Проверяем, есть ли данные для редактирования
+  const eventDataForEdit = localStorage.getItem('eventDataForEdit');
+  if (eventDataForEdit) {
+    try {
+      const parsedData = JSON.parse(eventDataForEdit);
+      if (parsedData.isEditing) {
+        isEditing.value = true;
+        originalEventId.value = parsedData.originalEventId;
+        
+        // Заполняем форму данными события
+        eventName.value = parsedData.event_name || '';
+        eventDesc.value = parsedData.event_desc || '';
+        eventLocation.value = parsedData.event_location || '';
+        eventBanner.value = parsedData.event_banner || null;
+        eventLinks.value = parsedData.event_link || '';
+        eventTags.value = parsedData.event_tag || '';
+        
+        // Устанавливаем дату и время
+        if (parsedData.event_date && parsedData.event_time) {
+          const eventDate = new Date(parsedData.event_date);
+          const [hours, minutes] = parsedData.event_time.split(':');
+          eventDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          
+          eventStart.value = eventDate.toISOString().slice(0, 16);
+          eventEnd.value = eventDate.toISOString().slice(0, 16);
+        }
+        
+        console.log('Режим редактирования включен для события:', parsedData.event_name);
+        
+        // Сохраняем только ID события для кнопки "Назад"
+        localStorage.setItem('editingEventId', parsedData.originalEventId);
+        
+        // Очищаем полные данные события
+        localStorage.removeItem('eventDataForEdit');
+      }
+    } catch (error) {
+      console.error('Ошибка при загрузке данных для редактирования:', error);
+    }
+  }
 });
 
 onUnmounted(() => {
@@ -151,6 +196,34 @@ const createEvent = async () => {
   const { initDataUnsafe } = useWebApp();
   const userId = initDataUnsafe?.user?.id;
 
+  if (isEditing.value) {
+    // Режим редактирования: сначала удаляем старое событие, затем создаем новое
+    try {
+      isSubmitting.value = true;
+      
+      // 1. Удаляем старое событие
+      const deleteResponse = await $fetch<{ success: boolean; error?: string }>('/api/deleteEvent', {
+        method: 'POST',
+        body: {
+          user_id: userId,
+          event_id: originalEventId.value
+        }
+      });
+
+      if (deleteResponse.error) {
+        console.error('Ошибка удаления старого события:', deleteResponse.error);
+        triggerNotification('Ошибка при удалении старого события');
+        return;
+      }
+    } catch (error) {
+      console.error('Ошибка при удалении старого события:', error);
+      triggerNotification('Ошибка при удалении старого события');
+      return;
+    } finally {
+      isSubmitting.value = false;
+    }
+  }
+
   try {
     const response = await $fetch<Response>('/api/createEvent', {
       method: 'POST',
@@ -175,10 +248,21 @@ const createEvent = async () => {
     if (response.error) {
       console.error('Ошибка:', response.error);
       triggerNotification(response.error);
+      
+      // Если была ошибка при редактировании, очищаем ID события
+      if (isEditing.value) {
+        localStorage.removeItem('editingEventId');
+      }
     } else {
-      // console.log('Успешное добавление события');
-
-      router.push({ path: '/myEvents', query: { created: true } });
+      if (isEditing.value) {
+        triggerNotification('Событие успешно обновлено');
+        // Очищаем ID редактируемого события
+        localStorage.removeItem('editingEventId');
+        router.push({ path: '/myEvents', query: { updated: true } });
+      } else {
+        triggerNotification('Событие успешно создано');
+        router.push({ path: '/myEvents', query: { created: true } });
+      }
     }
   } catch (error) {
     if (error.response && error.response._data && error.response._data.error) {
@@ -200,7 +284,16 @@ const resetForm = () => {
   eventTags.value = "";
   eventLinks.value = "";
   eventBanner.value = null;
+  
+  // Если был режим редактирования, очищаем ID события
+  if (isEditing.value) {
+    localStorage.removeItem('editingEventId');
+    isEditing.value = false;
+    originalEventId.value = '';
+  }
 };
+
+
 
 
 </script>
@@ -211,7 +304,9 @@ const resetForm = () => {
       {{ notificationMessage }}
     </div>
 
-    <div :class="styles.pageTitle">Создать событие</div>
+    <div :class="styles.pageTitle">{{ isEditing ? 'Редактировать событие' : 'Создать событие' }}</div>
+    
+
 
     <div :class="styles.imageUpload">
       <div :class="styles.imagePlaceholder">
@@ -280,7 +375,7 @@ const resetForm = () => {
 
     <div :class="styles.inputGroup">
       <div :class="styles.inputContainer">
-        <img src="/icons/tags_ae.svg" :class="styles.icon" alt="Теги" />
+        <img src="public/icons/tags_ae.svg" :class="styles.icon" alt="Теги" />
         <input type="text" :class="styles.inputField" placeholder="Теги" v-model="eventTags" />
       </div>
     </div>
@@ -291,7 +386,7 @@ const resetForm = () => {
 
     <div :class="styles.inputGroup">
       <div :class="styles.inputContainer">
-        <img src="/icons/links_ae.svg" :class="styles.icon" alt="Ссылки" />
+        <img src="public/icons/links_ae.svg" :class="styles.icon" alt="Ссылки" />
         <input type="text" :class="styles.inputField" placeholder="Ссылки" v-model="eventLinks" />
       </div>
     </div>
@@ -354,8 +449,8 @@ const resetForm = () => {
     </div>
 
     <button :class="[styles.submitButton, isFormValid ? styles.activeButton : styles.disabledButton]"
-      :disabled="!isFormValid" @click="createEvent">
-      Создать событие
+      :disabled="!isFormValid || isSubmitting" @click="createEvent">
+      {{ isSubmitting ? 'Сохранение...' : (isEditing ? 'Сохранить изменения' : 'Создать событие') }}
     </button>
   </div>
 </template>

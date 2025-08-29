@@ -5,7 +5,7 @@ import { useWebApp } from 'vue-tg';
 export const useTelegramInit = () => {
   const isTelegramReady = ref(false);
   const isInitializing = ref(true);
-  const userData = ref<any>(null);
+  const userData = ref<{ id: number; username?: string; first_name?: string; last_name?: string } | null>(null);
   const error = ref<string | null>(null);
   const hasInitialized = ref(false); // Флаг для предотвращения повторной инициализации
 
@@ -13,6 +13,12 @@ export const useTelegramInit = () => {
     // Если уже инициализировали, не делаем это снова
     if (hasInitialized.value && isTelegramReady.value) {
       console.log('Telegram уже инициализирован, пропускаем повторную инициализацию');
+      return;
+    }
+    
+    // Если у нас уже есть данные пользователя И флаги установлены, выходим
+    if (userData.value?.id && hasInitialized.value && isTelegramReady.value) {
+      console.log('Telegram уже полностью инициализирован, пропускаем');
       return;
     }
     
@@ -25,7 +31,12 @@ export const useTelegramInit = () => {
       
       if (initDataUnsafe?.user?.id) {
         // Telegram уже готов, не ждем
-        userData.value = initDataUnsafe.user;
+        userData.value = {
+          id: initDataUnsafe.user.id,
+          username: initDataUnsafe.user.username,
+          first_name: initDataUnsafe.user.first_name,
+          last_name: initDataUnsafe.user.last_name
+        };
         isTelegramReady.value = true;
         hasInitialized.value = true;
         console.log('Telegram Web App уже готов:', userData.value);
@@ -51,7 +62,12 @@ export const useTelegramInit = () => {
       const { initDataUnsafe: newInitData } = useWebApp();
       
       if (newInitData?.user?.id) {
-        userData.value = newInitData.user;
+        userData.value = {
+          id: newInitData.user.id,
+          username: newInitData.user.username,
+          first_name: newInitData.user.first_name,
+          last_name: newInitData.user.last_name
+        };
         isTelegramReady.value = true;
         hasInitialized.value = true;
         console.log('Telegram Web App инициализирован после ожидания:', userData.value);
@@ -117,7 +133,10 @@ export const useTelegramInit = () => {
   onMounted(() => {
     // Инициализируем только если еще не инициализировали
     if (!hasInitialized.value) {
+      console.log('Начинаем инициализацию Telegram Web App...');
       initTelegram();
+    } else {
+      console.log('Telegram уже инициализирован, пропускаем');
     }
   });
 
