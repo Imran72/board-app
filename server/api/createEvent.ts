@@ -1,5 +1,6 @@
 // server/api/createEvent.ts
 import { createClient } from '@supabase/supabase-js'
+import {timestamp} from "@antfu/utils";
 
 
 const FORBIDDEN_KEYWORDS = ["курение", "кальян", "вейп", "наркотики", "алкоголь"];
@@ -27,23 +28,28 @@ export default defineEventHandler(async (event) => {
         return { error: 'Мероприятие содержит недопустимые слова или относится к запрещенному типу заведения.' };
     }
 
-    const { error } = await supabase.from('events_raw').insert([
+    const days = [
+        "воскресенье", "понедельник", "вторник",
+        "среда", "четверг", "пятница", "суббота"
+    ];
+
+    const date = new Date(body.event_start_dttm);
+    const weekdayRu = days[date.getDay()]; // вернёт название на русском
+
+    const { error } = await supabase.from('alter_events').insert([
         {
             user_id: body.user_id,
             event_name: body.event_name,
+            event_date: date,
             event_banner: body.event_banner,
-            event_start_dttm: body.event_start_dttm,
-            event_end_dttm: body.event_end_dttm,
+            event_desc: body.event_description,
+            event_category: 'Хобби',
+            event_time: body.event_start_dttm,
             event_location: body.event_location,
-            event_description: body.event_description,
-            event_tag: body.event_tag,
-            event_link: body.event_link,
-            event_approval: body.event_approval,
-            event_price_status: body.event_price_status,
-            event_price: body.event_price,
-            event_visibility: body.event_visibility,
-            event_capacity: body.event_capacity,
-            event_moderation_step: 'На модерации'
+            event_host: 'Anonymous',
+            event_weekday: weekdayRu,
+            favorites_count: 0,
+            status: 'pending'
         }
     ])
 

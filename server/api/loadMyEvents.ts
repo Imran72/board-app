@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   // 2. Загружаем опубликованные события из основной таблицы events
   const { data: publishedEvents, error: publishedError } = await supabase
-    .from('events')
+    .from('alter_events')
     .select('*') // `event_id` здесь уже есть
     .eq('event_host', userName);
 

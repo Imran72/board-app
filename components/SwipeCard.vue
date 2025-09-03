@@ -186,17 +186,16 @@ const swipeCard = async (direction: 'left' | 'right') => {
       return;
     }
 
-    // Сохраняем "лайк" только при свайпе вправо
-    if (direction === 'right') {
-      await $fetch<Response>('/api/toggleFavorite', {
-        method: 'POST',
-        body: {
-          user_id,
-          event_id: currentCard.value.event_id,
-          action: 'save'
-        }
-      });
-    }
+  // Сохраняем "лайк" только при свайпе вправо
+    await $fetch<Response>('/api/toggleFavorite', {
+      method: 'POST',
+      body: {
+        user_id,
+        event_id: currentCard.value.event_id,
+        action: direction
+      }
+    });
+
 
       // Сохраняем ID следующей карточки в localStorage
   if (nextCard.value) {
@@ -482,7 +481,7 @@ onMounted(async () => {
     return;
   }
   
-  const initialEventId = (route.query.scrollTo as string) || localStorage.getItem('last_event_id');
+  const initialEventId = '1ee71f6d-ac6a-42dd-a78b-c03a2cac943b'; //(route.query.scrollTo as string) || localStorage.getItem('last_event_id');
   await initCards(initialEventId);
 
   if (currentCard.value) {

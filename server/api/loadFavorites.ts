@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     .from('user_favorites')
     .select(`
       event_id,
-      events (
+      alter_events (
         event_name,
         event_date,
         event_time,
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
   // Преобразуем данные, чтобы убрать вложенность
   const favorites = data.map(fav => ({
     event_id: fav.event_id,
-    ...(fav.events || {}) // Используем spread и защиту от null
+    ...(fav.alter_events || {}) // Используем spread и защиту от null
   }));
 
   // Возвращаем данные под правильным ключом 'data'

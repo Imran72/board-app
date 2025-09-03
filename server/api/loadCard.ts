@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     const currentEventId = eventId ? String(eventId) : null;
 
     // Теперь мы запрашиваем все поля (*) из таблицы events без лишних соединений
-    const baseQuery = supabase.from('events').select('*');
+    const baseQuery = supabase.from('alter_events').select('*');
 
     if (direction === 'current' && currentEventId) {
       query = baseQuery.eq('event_id', currentEventId).limit(1);
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
     // Логика зацикливания остается
     if (!data && direction === 'next') {
       console.log('loadCard: Trying fallback for next direction');
-      const { data: fallback, error: fallbackError } = await supabase.from('events').select('*').order('event_id', { ascending: true }).limit(1).single();
+      const { data: fallback, error: fallbackError } = await supabase.from('alter_events').select('*').order('event_id', { ascending: true }).limit(1).single();
       console.log('loadCard: Fallback next result:', { hasFallback: !!fallback, hasError: !!fallbackError });
       if (fallbackError) {
         console.error('Fallback query error:', fallbackError);
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event) => {
     }
     if (!data && direction === 'prev' && currentEventId) {
       console.log('loadCard: Trying fallback for prev direction');
-      const { data: fallback, error: fallbackError } = await supabase.from('events').select('*').order('event_id', { ascending: false }).limit(1).single();
+      const { data: fallback, error: fallbackError } = await supabase.from('alter_events').select('*').order('event_id', { ascending: false }).limit(1).single();
       console.log('loadCard: Fallback prev result:', { hasFallback: !!fallback, hasError: !!fallbackError });
       if (fallbackError) {
         console.error('Fallback query error:', fallbackError);

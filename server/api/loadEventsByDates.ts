@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!dates || dates.length === 0) {
     // Если даты не выбраны, возвращаем все события
     const { data, error } = await supabase
-      .from('events')
+      .from('alter_events')
       .select('*')
       .order('event_date', { ascending: true });
 
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   try {
     // Фильтруем события по выбранным датам
     const { data, error } = await supabase
-      .from('events')
+      .from('alter_events')
       .select('*')
       .in('event_date', dates)
       .order('event_date', { ascending: true });

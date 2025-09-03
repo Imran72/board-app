@@ -224,6 +224,8 @@ const createEvent = async () => {
     }
   }
 
+  console.log(123)
+
   try {
     const response = await $fetch<Response>('/api/createEvent', {
       method: 'POST',

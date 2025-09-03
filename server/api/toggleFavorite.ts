@@ -13,10 +13,10 @@ export default defineEventHandler(async (event) => {
     }
 
     try {
-        if (action === 'save') {
+        if (action === 'right') {
             // Вставляем или обновляем запись в избранном
             const { error: upsertError } = await supabase.from('user_favorites').upsert(
-                { user_id: String(user_id), event_id: String(event_id) },
+                { user_id: user_id, event_id: event_id },
                 { onConflict: 'user_id,event_id' }
             );
 
@@ -32,13 +32,13 @@ export default defineEventHandler(async (event) => {
             return { success: true, newState: 'saved' }
         } 
         
-        else if (action === 'unsave') {
+        else if (action === 'left') {
             // Удаляем запись из избранного
             const { error: deleteError } = await supabase
                 .from('user_favorites')
                 .delete()
-                .eq('user_id', String(user_id))
-                .eq('event_id', String(event_id))
+                .eq('user_id', user_id)
+                .eq('event_id', event_id)
 
             if (deleteError) throw deleteError;
 
